@@ -28,7 +28,7 @@ The local detector coordinates are defined with respect to one side (the left on
   - `chamber[1]`: bottom-right
   - `chamber[2]`: top-left
   - `chamber[3]`: bottom-left
-- layers are numbered from bottom to top
+- layers are numbered from bottom (`layer = 1`) to top (`layer = 4`)
 - assuming each row is a python list (i.e. `list[0] = event number`, `list[1] = N`, ...) and $i \in [0, 1, ..., N-1]$:
   - *chamber*: `list[2+5i]`
   - *layer*: `list[3+5i]`
@@ -37,8 +37,10 @@ The local detector coordinates are defined with respect to one side (the left on
   - *time*: `list[6+5i]`
   - the possible layout for a pandas dataframe could be:
 
-|Ev_Number | $n \in [1, N]$ | chamber | layer | XL_local | XR_local | Z_local | time | XL_global | XR_global | Z_global |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+|Ev_Number  | chamber | layer | XL_local | XR_local | Z_local | time | XL_global | XR_global | Z_global |
+| ---  | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+The hit number ($n \in [1, N]$) is used as the index of the Dataframe.
 
 ## Coordinates transformation
 
@@ -67,12 +69,12 @@ z_local = local_z_shifts[layer]
 z_global = global_z_shifts[chamber] + z_local
 ```
 
-## Functions to write
+## Functions
 
 ### Read data
 
-- **Input**: 1 row of data_file.txt, e.g. 1 event
-- **Output**: pandas dataframe as in the *Data Format* paragraph
+- **Input**: 1 row of data_file.txt, e.g. 1 event, passed as a `list`
+- **Output**: pandas dataframe as in the *Data Format* paragraph, Number of the Event, Number of hits in the Event
 
 This function takes in input one event at time, and then outputs a pandas dataframe as described in the previous section. In addition, the transformation from local to global coordinates is performed.
 
@@ -116,7 +118,8 @@ The fit is only made for good events, which means the return of *Select Events (
 
 The fit has to be made considering all of the possible permutation of the left/right signals; the result will be chosen by selecting the fit with the lowest $\chi^2$.
 
-**This part is a draft, and should be analyze better**: The fit should be made using a fixed number of points (e.g. 6 in different layers), even if we have more. If we have more signals, they should be used to check the goodness of the fit (compare the measured position with ones calculated with fit results).
+**This part is a draft, and should be analyze better**
+> The fit should be made using a fixed number of points (e.g. 6 in different layers), even if we have more. If we have more signals, they should be used to check the goodness of the fit (compare the measured position with ones calculated with fit results).
 
 ### Plot events with fit
 
