@@ -35,12 +35,12 @@ The local detector coordinates are defined with respect to one side (the left on
   - *xleft*: `list[4+5i]`
   - *xright*: `list[5+5i]`
   - *time*: `list[6+5i]`
-  - the possible layout for a pandas dataframe could be:
+  - the possible layout for a Pandas `DataFrame` could be:
 
-|Ev_Number  | chamber | layer | XL_local | XR_local | Z_local | time | XL_global | XR_global | Z_global |
-| ---  | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Ev_Number | ($n \in [1, N]$) | chamber | layer | XL_local | XR_local | Z_local | time | XL_global | XR_global | Z_global |
+| --------- | ---------------- | ------- | ----- | -------- | -------- | ------- | ---- | --------- | --------- | -------- |
 
-The hit number ($n \in [1, N]$) is used as the index of the Dataframe.
+~~The hit number  is used as the index of the Dataframe.~~
 
 ## Coordinates transformation
 
@@ -74,23 +74,38 @@ z_global = global_z_shifts[chamber] + z_local
 ### Read data
 
 - **Input**: 1 row of data_file.txt, e.g. 1 event, passed as a `list`
-- **Output**: pandas dataframe as in the *Data Format* paragraph, Number of the Event, Number of hits in the Event
+- **Output**: Pandas `DataFrame` as in the *Data Format* paragraph, Number of the Event, Number of hits in the Event
 
-This function takes in input one event at time, and then outputs a pandas dataframe as described in the previous section. In addition, the transformation from local to global coordinates is performed.
+This function takes in input one event at time, and then outputs a Pandas `DataFrame` as described in the previous section. In addition, the transformation from local to global coordinates is performed.
+
+### Plot background
+
+- **Input**: `None`
+- **Output**: `list`[pyplot `Axes`] (global image + 4 detectors zooms)
+
+Five plots are given as output: one image of the whole detector, and one for each of the 4 chambers. This function is made in order to do the plot of the background only one time, instead of doing that for every Event.
+
+In order to plot the `Axes` in the `list`, and get a good layout:
+```python
+gridsize = (5, 2)
+fig = plt.figure(figsize = (12, 24))
+axes = plot_background()
+plt.show()
+```
 
 ### Plot events
 
-- **Input**: pandas dataframe (1 event)
-- **Output**: pyplot Figure (global image + 4 detectors zooms)
+- **Input**: Pandas `DataFrame` (1 event) + `list`[pyplot `Axes`]
+- **Output**: `list`[pyplot `Axes`] (global image + 4 detectors zooms)
 
-The input of the function is the pandas dataframe made by the *Read Data* function. Five plots are given as output: one image of the whole detector, and one for each of the 4 chambers. In the images there will be the points of the hits tracked in the event (left/right positions must have different colors).
+The input of the function is the Pandas `DataFrame` made by the *Read Data* function, and the `list` of the background images created by *Plot background* function. Five plots are given as output: one image of the whole detector, and one for each of the 4 chambers. In the images there will be the points of the hits tracked in the event (left/right positions must have different colors).
 
 ### Select Events (Calibration)
 
-- **Input**: pandas dataframe (1 event)
+- **Input**: Pandas `DataFrame` (1 event)
 - **Output**: True/False
 
-The input of the function is the pandas dataframe made by the *Read Data* function. The output is a boolean value, which labels the good calibration events.
+The input of the function is the Pandas `DataFrame` made by the *Read Data* function. The output is a boolean value, which labels the good calibration events.
 
 **We need to plot the histogram of the frequency of the number of hits, in order to find out the best requirements for good events.**
 
@@ -98,10 +113,10 @@ The input of the function is the pandas dataframe made by the *Read Data* functi
 
 ### Local linear fit
 
-- **Input**: pandas dataframe (1 event)
+- **Input**: Pandas `DataFrame` (1 event)
 - **Output**: [[slope, intercept] for each chamber]
 
-The input of the function is the pandas dataframe made by the *Read Data* function. The output is a list of list with the coefficients of the linear regression (e.g. `scipy.stats.linregress`) for each chamber.
+The input of the function is the Pandas `DataFrame` made by the *Read Data* function. The output is a list of list with the coefficients of the linear regression (e.g. `scipy.stats.linregress`) for each chamber.
 
 The fit is only made for good events, which means the return of *Select Events (Calibration)* function is `True`. If there are no hits in the chamber, the list returned should be `[False, False]`.
 
@@ -109,10 +124,10 @@ The fit has to be made considering all of the possible permutation of the left/r
 
 ### Global linear fit
 
-- **Input**: pandas dataframe (1 event)
+- **Input**: Pandas `DataFrame` (1 event)
 - **Output**: [[slope, intercept] for each side (left/right)]
 
-The input of the function is the pandas dataframe made by the *Read Data* function. The output is a list of list with the coefficients of the linear regression (e.g. `scipy.stats.linregress`) for each side.
+The input of the function is the Pandas `DataFrame` made by the *Read Data* function. The output is a list of list with the coefficients of the linear regression (e.g. `scipy.stats.linregress`) for each side.
 
 The fit is only made for good events, which means the return of *Select Events (Calibration)* function is `True`, for calibration runs, or *Select Events (Physics)* function is `True`, for physics runs. If there are no hits in one of the sides (calibration runs), the list returned should be `[False, False]`.
 
