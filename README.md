@@ -95,10 +95,10 @@ plt.show()
 
 ### Plot events
 
-- **Input**: Pandas `DataFrame` (1 event) + `list`[pyplot `Axes`]
-- **Output**: `list`[pyplot `Axes`] (global image + 4 detectors zooms)
+- **Input**: Pandas `DataFrame` (1 event) + event number
+- **Output**: `list`\[pyplot `Axes`\] (global image + 4 detectors zooms)
 
-The input of the function is the Pandas `DataFrame` made by the *Read Data* function, and the `list` of the background images created by *Plot background* function. Five plots are given as output: one image of the whole detector, and one for each of the 4 chambers. In the images there will be the points of the hits tracked in the event (left/right positions must have different colors).
+The input of the function is the Pandas `DataFrame` made by the *Read Data* function, and the event number (this is due to the fact that, if the are no hits, the `DataFrame` is empty, and therefore we can't get the Event number from that). Five plots are given as output: one image of the whole detector, and one for each of the 4 chambers. In the images there will be the points of the hits tracked in the event (left/right positions must have different colors).
 
 ### Select Events (Calibration)
 
