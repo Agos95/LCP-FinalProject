@@ -29,10 +29,15 @@ fig = plt.figure(figsize = (15, 6))
 background = analysis.plot_background()
 for ax in background: fig.add_subplot(ax)
 
+#table_header = ['EvNumber', 'Hit', 'Chamber', 'Layer', 'XL_local', 'XR_local', 'Z_local', 'Time', 'XL_global', 'XR_global', 'Z_global']
+#table_values = ['', '', '', '', '', '', '', '', '', '', '']
+
 figure_x, figure_y, figure_w, figure_h = fig.bbox.bounds
 layout = [[sg.Text('Select File'), sg.InputText(key='_InputFileName_'), sg.FileBrowse(key='_InputFile_'),
            sg.Submit('Run the Analyses', key='_Analyze_'), sg.ProgressBar(10000, orientation='h', size=(30,20), key='_Progressbar_')],
-          [sg.Listbox(values=[],size=(30, 30), bind_return_key=True, disabled=True, key='_EventList_'), sg.Canvas(size=(figure_w, figure_h), key='_Plot_')]]
+          [sg.Listbox(values=[],size=(10, 30), bind_return_key=True, disabled=True, key='_EventList_'), sg.Canvas(size=(figure_w, figure_h), key='_Plot_')],
+         #[sg.Table(values=table_values, headings=table_header, key="_Table_")]
+         ]
 
 window = sg.Window('Event Display').Layout(layout)
 # need to call Finalize() to use the Canvas
@@ -58,6 +63,7 @@ while True:
 
     ### analyze datafile
     if event == '_Analyze_':
+        window.Disable()
         data_file = values['_InputFileName_']
         with open(data_file) as f:
             # count total events in the file (e.g. total lines) to display the progress bar
@@ -78,6 +84,7 @@ while True:
 
         # once the analysis is done, update the list of events in the listbox
         list_box.Update(values=sorted(Events), disabled=False)
+        window.Enable()
 
     ### display events
     elif event == '_EventList_':
