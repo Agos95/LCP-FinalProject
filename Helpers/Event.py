@@ -17,17 +17,30 @@ local_z_shifts = [z*ZCELL for z in range(0,4)]
 global_z_shifts = [823.5, 0, 823.5, 0]
 
 class Event:
-    "Class for handling Events"
+    """
+    Class for handling Events
+    It contains all the function to analyze a sigle Event (e.g. a single line in data files)
+    'PUBLIC' OBJECTS:
+      - dataframe: Pandas Dataframe with all the information about the Event
+      - event_number: # of the Event in the run
+      - hits_number: # of hits in the Event
+      - local_fit: list of dictionaries with information about local fit (one dictionary per chamber)
+      - Make_Plot(): plot the background image and the hits
+    """
     
     # share by every instance of 'Event'
-    background_display = None
+    _background_display = None
     
     def __init__(self, event):
-        self.dataframe, self.event_number, self.hits_number = self.Read_Data(event)
-        self.event_display = None
-        self.local_fit = self.Local_Fit()
+        """Create the Dataframe and performs local and global fit"""
+
+        self.dataframe, self.event_number, self.hits_number = self._Read_Data(event)
+        self._event_display = None
+        self.local_fit = self._Local_Fit()
         
-    def Read_Data(self, event):
+    def _Read_Data(self, event):
+        """Read data input and create the Dataframe"""
+
         event_number = int(event[0])
         hits_number  = int(event[1])
         if hits_number == 0:
@@ -67,9 +80,11 @@ class Event:
             })
         return dataframe, event_number, hits_number
     
-    def Plot_Background(self):
-        if self.background_display == None:
-            # create Pandas DataFrame for the cambers positions
+    def _Plot_Background(self):
+        """Makes the plot fr the background of the event display"""
+
+        if self._background_display == None:
+            # create Pandas DataFrame for the chambers positions
             chamber_position = pd.DataFrame({
             'chamber' : [i for i in range(4)],
             'x_vertices' : [(global_x_shifts[i], global_x_shifts[i] - 720, global_x_shifts[i] - 720, global_x_shifts[i])
@@ -109,13 +124,16 @@ class Event:
                     chamber = chamber_position[chamber_position["chamber"] == j]
                     ax.fill(chamber["x_vertices"].values[0], chamber["y_vertices"].values[0], color='gray', fill=False)
             self.background_display = axes
-        return self.background_display
+            return self.background_display
+        return self._background_display
         
-    def Plot_Events(self, dataframe, evNumber):
-        if self.event_display == None:
+    def _Plot_Events(self, dataframe, evNumber):
+        """Plot the positions of the hits"""
+
+        if self._event_display == None:
             # get the EvNumber as argument, because, if the dataframe is empty,
             # I can't get it from data
-            plots = self.Plot_Background()
+            plots = self._Plot_Background()
             plots[0].set_title("Event:"+str(evNumber), {'size':'18'})
             if dataframe.empty == False:
                 xL = dataframe["XL_global"]
@@ -124,17 +142,22 @@ class Event:
                 for image in plots:     
                     image.plot(xL, z, "bo", markersize=3)
                     image.plot(xR, z, "ro", markersize=3)
-            self.event_display = plots
-        return self.event_display
+            local_fit = self.local_fit
+            self._event_display = plots
+        return self._event_display
         
     def Make_Plot(self):
+        """Return the plots of the background and the hits"""
+
         #gridsize = (5, 2)
         plt.figure(figsize = (12, 24))
-        self.Plot_Background()
-        self.Plot_Events(self.dataframe, self.event_number)
+        self._Plot_Background()
+        self._Plot_Events(self.dataframe, self.event_number)
         plt.show()
 
-    def Select_Events(self):
+    def _Select_Events(self):
+        """Select good Events (calibration)"""
+
         # hits only in the right side
         dataframe = self.dataframe
         if((dataframe['Chamber']<=1).all()):
@@ -177,36 +200,38 @@ class Event:
             n_layer=[]
             return select, chambers, n_layer
 
-    def Local_Fit(self):
+    """def _Local_Fit(self):
+        #Perform local fit in every chamber
+
         dataframe = self.dataframe
-        select, list_chambers, list_layers = self.Select_Events()
-        #list to store results for each chamber
-        results=[]
-        #loop over the (two) chambers
+        select, list_chambers, list_layers = self._Select_Events()
+        # list to store results for each chamber
+        results={"LocalCoordinates", "GlobalCoordinates"}
+        # loop over the (two) chambers
         for i in range(0,len(list_chambers)):
-        #if we have 4 different layers we randomly select a layer to be excluded
-        #we will use the point from the excluded layer to check the goodness of the global fit
+        # if we have 4 different layers we randomly select a layer to be excluded
+        # we will use the point from the excluded layer to check the goodness of the global fit
             if(list_layers[i]==4):
                 rand_layer=random.randint(1,4)
             else:
-                rand_layer=0 #layers are 1,2,3,4: excluding layer 0 is equivalent to keeping them all
+                rand_layer=0 # layers are 1,2,3,4: excluding layer 0 is equivalent to keeping them all
             
-            #create dataframe_cl filtered by chamber and excluded layer
-            dataframe_c  = dataframe[dataframe['Chamber']==list_chambers[i]] #dataframe filtered by chamber
-            dataframe_cl = dataframe_c[dataframe_c['Layer']!=rand_layer]     #filtered by chamber and excluded layer
+            # create dataframe_cl filtered by chamber and excluded layer
+            dataframe_c  = dataframe[dataframe['Chamber']==list_chambers[i]] # dataframe filtered by chamber
+            dataframe_cl = dataframe_c[dataframe_c['Layer']!=rand_layer]     # filtered by chamber and excluded layer
             
             # Z local coordinates corresponding to the 4 different layers
             Z=[6.5,19.5, 32.5, 45.5]
             
-            #create a list l containing 3 lists of points (z,x), one for each selected layer
+            # create a list l containing 3 lists of points (z,x), one for each selected layer
             l=[]
             
-            #loop over selected layers and fill l
+            # loop over selected layers and fill l
             for layer_index in dataframe_cl['Layer'].unique():
                 XR=np.array(dataframe_cl[dataframe_cl['Layer']==layer_index]['XR_local'])
                 XL=np.array(dataframe_cl[dataframe_cl['Layer']==layer_index]['XL_local'])
                 
-                z=Z[(layer_index-1)] #layer_index is in range [1,4], list index must be in range [0,3]
+                z=Z[(layer_index-1)] # layer_index is in range [1,4], list index must be in range [0,3]
                 l_temp=[]
                 
                 for x in XR:
@@ -215,22 +240,22 @@ class Event:
                     l_temp.append((z,x)) 
                 l.append(l_temp) 
                 
-            #create numpy array with all possible combinations of 3 points p1,p2,p3
+            # create numpy array with all possible combinations of 3 points p1,p2,p3
             combinations=np.array([(p1,p2,p3) for p1 in l[0] for p2 in l[1] for p3 in l[2]])
             
-            #interpolate each combination and select the combination with least chi squared
-            min_chisq=100000 #to store minimum chisq
-            optimal_comb=np.zeros((3,2)) #to store best combination of points
-            slope_opt=0 #to store slope obtained with the best combination
-            intercept_opt=0 #to store intercept obtained with the best combination
+            # interpolate each combination and select the combination with least chi squared
+            min_chisq=100000 # to store minimum chisq
+            optimal_comb=np.zeros((3,2)) # to store best combination of points
+            slope_opt=0 # to store slope obtained with the best combination
+            intercept_opt=0 # to store intercept obtained with the best combination
             for points in combinations:
-                #linear regression
+                # linear regression
                 slope, intercept, r_value, p_value, std_err=stats.linregress(points[:,0],points[:,1])
-                #compute expected x using the interpolating function
+                # compute expected x using the interpolating function
                 expect_x=intercept+slope*(points[:,0])
-                #compute chi squared
+                # compute chi squared
                 chisq, p_value=stats.chisquare(points[:,1],expect_x)
-                #eventually update min_chisq and optimal_comb
+                # eventually update min_chisq and optimal_comb
                 if(chisq<min_chisq):
                     min_chisq=chisq
                     optimal_comb=points
@@ -240,9 +265,20 @@ class Event:
                     continue
                     
             #add to results: results is a list of 2 dictionaries, one for each chamber       
-            results.append({"slope":slope_opt, 
-                            "intercept":intercept_opt, 
-                            "optimal_comb": optimal_comb, 
-                            "excl_layer": rand_layer})
+            results["LocalCoordinates"] = {"slope":slope_opt, 
+                                           "intercept":intercept_opt, 
+                                           "optimal_comb": optimal_comb, 
+                                           "excl_layer": rand_layer}
                     
-        return results
+        return results"""
+
+    def _Local_Fit(self):
+        """Perform local fit in every chamber"""
+
+        dataframe = self.dataframe
+        select, list_chambers, list_layers = self._Select_Events()
+        results_LC = {} # results in Local Coordinates
+        results_GC = {} # results in Global Coordinates 
+
+
+        return results_LC, results_GC
