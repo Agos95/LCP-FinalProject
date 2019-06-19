@@ -17,30 +17,54 @@ local_z_shifts = [z*ZCELL for z in range(0,4)]
 global_z_shifts = [823.5, 0, 823.5, 0]
 
 class Event:
-    """
-    Class for handling Events
-    It contains all the function to analyze a sigle Event (e.g. a single line in data files)
-    'PUBLIC' OBJECTS:
-      - dataframe: Pandas Dataframe with all the information about the Event
-      - event_number: # of the Event in the run
-      - hits_number: # of hits in the Event
-      - local_fit: list of dictionaries with information about local fit (one dictionary per chamber)
-      - Make_Plot(): plot the background image and the hits
-    """
+    '''
+    Class for handling and analyzing single Events (e.g. a single line in the data file)
     
-    # share by every instance of 'Event'
-    _background_display = None
-    
-    def __init__(self, event):
-        """Create the Dataframe and performs local and global fit"""
+    Parameters
+    ----------
+    event_str : str
+        single line of the data file
 
-        self.dataframe, self.event_number, self.hits_number = self._Read_Data(event)
+    Attributes
+    ----------
+    dataframe : pandas.dataframe
+        Pandas Dataframe with all the information about the Event;
+        each row is a single hit recorded in the event
+    event_number : int
+        number of the Event in the run
+    hits_number : int
+        number of hits in the Event
+    local_fit : list(dict)
+        information about local fit (one dictionary per chamber)
+    '''
+    
+    def __init__(self, event_str):
+
+        self.dataframe, self.event_number, self.hits_number = self._Read_Data(event_str)
+        #self._evt_figure = plt.figure(figsize = (12, 24))
         self._event_display = None
         self.local_fit = self._Local_Fit()
         
-    def _Read_Data(self, event):
-        """Read data input and create the Dataframe"""
+    def _Read_Data(self, event_str):
+        '''Read input event as string and create the Dataframe
 
+        Parameters
+        ----------
+        event_str : str
+            Single line of the data file
+
+        Returns
+        -------
+        dataframe : pandas.dataframe
+            Pandas Dataframe with all the information about the Event;
+            each row is a single hit recorded in the event
+        event_number : int
+            number of the Event in the run
+        hits_number : int
+            number of hits in the Event
+        '''
+
+        event        = event_str.split()
         event_number = int(event[0])
         hits_number  = int(event[1])
         if hits_number == 0:
@@ -65,8 +89,8 @@ class Event:
             xl_global = np.fromiter((global_x_shifts[i] for i in chamber), float) - xl_local
             xr_global = np.fromiter((global_x_shifts[i] for i in chamber), float) - xr_local
             z_global  = np.fromiter((global_z_shifts[i] for i in chamber), float) + z_local
-        dataframe = pd.DataFrame(
-            { 'EvNumber' : event_number,
+        dataframe = pd.DataFrame({
+            'EvNumber' : event_number,
             'Hit'      : hit,
             'Chamber'  : chamber,
             'Layer'    : layer,
@@ -81,82 +105,108 @@ class Event:
         return dataframe, event_number, hits_number
     
     def _Plot_Background(self):
-        """Makes the plot fr the background of the event display"""
+        '''Makes the plot fr the background of the event display
 
-        if self._background_display == None:
-            # create Pandas DataFrame for the chambers positions
-            chamber_position = pd.DataFrame({
-            'chamber' : [i for i in range(4)],
-            'x_vertices' : [(global_x_shifts[i], global_x_shifts[i] - 720, global_x_shifts[i] - 720, global_x_shifts[i])
-                            for i in range(4)],
-            'y_vertices' : [(global_z_shifts[i], global_z_shifts[i], global_z_shifts[i] + 52, global_z_shifts[i] + 52)
-                            for i in range(4)],
-            })
-            x_lim = [[-1000, 1000], # global detector
-                     [    0, 1000], # chamber 0
-                     [    0, 1000], # chamber 1
-                     [-1000,    0], # chamber 2
-                     [-1000,    0]] # chamber 3
-            y_lim = [[-100, 1000],  # global detector
-                     [800 ,  900],  # chamber 0
-                     [ -25,   75],  # chamber 1
-                     [ 800,  900],  # chamber 2
-                     [ -25,   75]]  # chamber 3
-            title = ["DETECTOR", "Chamber 0", "Chamber 1", "Chamber 2", "Chamber 3"]
-            # create pyplot 'Axes' objects
-            gridsize = (5,2)
-            ax_global = plt.subplot2grid(gridsize, (0, 0), colspan=2, rowspan=2)
-            ax_0 = plt.subplot2grid(gridsize, (2, 1), colspan=1, rowspan=1) # top-right
-            ax_1 = plt.subplot2grid(gridsize, (3, 1), colspan=1, rowspan=1) # bottom-right
-            ax_2 = plt.subplot2grid(gridsize, (2, 0), colspan=1, rowspan=1) # top-left
-            ax_3 = plt.subplot2grid(gridsize, (3, 0), colspan=1, rowspan=1) # bottom-left
-
-            axes = [ax_global, ax_0, ax_1, ax_2, ax_3]
-            for index, ax in enumerate(axes):
-                ax.set_xlim(x_lim[index])
-                ax.set_ylim(y_lim[index])
-                ax.set_xlabel("x [mm]")
-                ax.set_ylabel("z [mm]")
-                if index == 0: ax.set_title(title[index])
-                else: ax.set_title(title[index], pad=-20)
-                # plot the 4 chambers in each 'Axes'
-                for j in range(4):
-                    chamber = chamber_position[chamber_position["chamber"] == j]
-                    ax.fill(chamber["x_vertices"].values[0], chamber["y_vertices"].values[0], color='gray', fill=False)
-            self.background_display = axes
-            return self.background_display
-        return self._background_display
+        Parameters
+        ----------
         
-    def _Plot_Events(self, dataframe, evNumber):
-        """Plot the positions of the hits"""
+        Returns
+        -------
+        axes : list(pyplot.axes)
+            background images of the detector and the chambers
+        '''
 
-        if self._event_display == None:
-            # get the EvNumber as argument, because, if the dataframe is empty,
-            # I can't get it from data
-            plots = self._Plot_Background()
-            plots[0].set_title("Event:"+str(evNumber), {'size':'18'})
-            if dataframe.empty == False:
-                xL = dataframe["XL_global"]
-                xR = dataframe["XR_global"]
-                z  = dataframe["Z_global"]
-                for image in plots:     
-                    image.plot(xL, z, "bo", markersize=3)
-                    image.plot(xR, z, "ro", markersize=3)
-            local_fit = self.local_fit
-            self._event_display = plots
-        return self._event_display
+        # create Pandas DataFrame for the chambers positions
+        chamber_position = pd.DataFrame({
+        'chamber' : [i for i in range(4)],
+        'x_vertices' : [(global_x_shifts[i], global_x_shifts[i] - 720, global_x_shifts[i] - 720, global_x_shifts[i])
+                        for i in range(4)],
+        'y_vertices' : [(global_z_shifts[i], global_z_shifts[i], global_z_shifts[i] + 52, global_z_shifts[i] + 52)
+                        for i in range(4)],
+        })
+        x_lim = [[-1000, 1000], # global detector
+                    [    0, 1000], # chamber 0
+                    [    0, 1000], # chamber 1
+                    [-1000,    0], # chamber 2
+                    [-1000,    0]] # chamber 3
+        y_lim = [[-100, 1000],  # global detector
+                    [800 ,  900],  # chamber 0
+                    [ -25,   75],  # chamber 1
+                    [ 800,  900],  # chamber 2
+                    [ -25,   75]]  # chamber 3
+        title = ["DETECTOR", "Chamber 0", "Chamber 1", "Chamber 2", "Chamber 3"]
+        # create pyplot 'Axes' objects
+        gridsize = (5,2)
+        ax_global = plt.subplot2grid(gridsize, (0, 0), colspan=2, rowspan=2)
+        ax_0 = plt.subplot2grid(gridsize, (2, 1), colspan=1, rowspan=1) # top-right
+        ax_1 = plt.subplot2grid(gridsize, (3, 1), colspan=1, rowspan=1) # bottom-right
+        ax_2 = plt.subplot2grid(gridsize, (2, 0), colspan=1, rowspan=1) # top-left
+        ax_3 = plt.subplot2grid(gridsize, (3, 0), colspan=1, rowspan=1) # bottom-left
+
+        axes = [ax_global, ax_0, ax_1, ax_2, ax_3]
+        for index, ax in enumerate(axes):
+            ax.set_xlim(x_lim[index])
+            ax.set_ylim(y_lim[index])
+            ax.set_xlabel("x [mm]")
+            ax.set_ylabel("z [mm]")
+            if index == 0: ax.set_title(title[index])
+            else: ax.set_title(title[index], pad=-20)
+            # plot the 4 chambers in each 'Axes'
+            for j in range(4):
+                chamber = chamber_position[chamber_position["chamber"] == j]
+                ax.fill(chamber["x_vertices"].values[0], chamber["y_vertices"].values[0], color='gray', fill=False)
+        return axes
+    
+    def _Plot_Events(self, dataframe, evNumber):
+        '''Plot the positions of the hits
+        
+        Parameters
+        ----------
+        dataframe : pandas.dataframe
+            Pandas Dataframe with all the information about the Event;
+            each row is a single hit recorded in the event
+        event_number : int
+            number of the Event in the run
+
+        Returns
+        -------
+        _event_display : list(pyplot.axes)
+            images of the hits of the events
+        '''
+
+        # get the EvNumber as argument, because, if the dataframe is empty,
+        # I can't get it from data
+        plots = self._Plot_Background()
+        plots[0].set_title("Event:"+str(evNumber), {'size':'18'})
+        if dataframe.empty == False:
+            xL = dataframe["XL_global"]
+            xR = dataframe["XR_global"]
+            z  = dataframe["Z_global"]
+            for image in plots:     
+                image.plot(xL, z, "bo", markersize=3)
+                image.plot(xR, z, "ro", markersize=3)
+        #local_fit = self.local_fit
+        return plots
         
     def Make_Plot(self):
-        """Return the plots of the background and the hits"""
+        '''Plots of the background and the hits
+        
+        Parameters
+        ----------
+
+        Returns
+        -------
+        plot the image of the detector and the chambers with the hits 
+        '''
 
         #gridsize = (5, 2)
         plt.figure(figsize = (12, 24))
-        self._Plot_Background()
         self._Plot_Events(self.dataframe, self.event_number)
         plt.show()
+        return
 
     def _Select_Events(self):
-        """Select good Events (calibration)"""
+        '''Select good Events (calibration)'''
 
         # hits only in the right side
         dataframe = self.dataframe
