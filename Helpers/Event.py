@@ -19,7 +19,7 @@ global_z_shifts = [823.5, 0, 823.5, 0]
 class Event:
     '''
     Class for handling and analyzing single Events (e.g. a single line in the data file)
-    
+
     Parameters
     ----------
     event_str : str
@@ -41,13 +41,13 @@ class Event:
     local_fit : list(dict)
         information about local fit (one dictionary per chamber)
     '''
-    
+
     def __init__(self, event_str, isPhysics=True):
 
         self.isPhysics = isPhysics
         self.dataframe, self.event_number, self.hits_number = self._Read_Data(event_str)
         #self.local_fit = self._Local_Fit()
-        
+
     def _Read_Data(self, event_str):
         '''Read input event as string and create the Dataframe
 
@@ -106,13 +106,13 @@ class Event:
             'Z_global' : z_global,
             })
         return dataframe, event_number, hits_number
-    
+
     def _Plot_Background(self):
-        '''Makes the plot fr the background of the event display
+        '''Makes the plot for the background of the event display
 
         Parameters
         ----------
-        
+
         Returns
         -------
         axes : list(pyplot.axes)
@@ -159,10 +159,10 @@ class Event:
                 chamber = chamber_position[chamber_position["chamber"] == j]
                 ax.fill(chamber["x_vertices"].values[0], chamber["y_vertices"].values[0], color='gray', fill=False)
         return axes
-    
+
     def _Plot_Events(self, dataframe, evNumber):
         '''Plot the positions of the hits
-        
+
         Parameters
         ----------
         dataframe : pandas.dataframe
@@ -185,12 +185,12 @@ class Event:
             xL = dataframe["XL_global"]
             xR = dataframe["XR_global"]
             z  = dataframe["Z_global"]
-            for image in plots:     
+            for image in plots:
                 image.plot(xL, z, "bo", markersize=3)
                 image.plot(xR, z, "ro", markersize=3)
         #local_fit = self.local_fit
         return plots
-        
+
     def Make_Plot(self):
         '''Plots of the background and the hits'''
 
@@ -210,7 +210,7 @@ class Event:
 
     def _Select_Events_Calibration(self):
         '''Select good Events (calibration)
-        
+
         Returns
         -------
         select : bool
@@ -223,49 +223,57 @@ class Event:
 
         # hits only in the right side
         dataframe = self.dataframe
-        if((dataframe['Chamber']<=1).all()):
+        # if we have less than 6 hits or more than 20
+        # mark the event as 'bad'
+        if (self.hits < 6 or self.hits_number > 20):
+            select=False
+            chambers=[]
+            n_layer=[]
+            return select, chambers, n_layer
+
+        elif((dataframe['Chamber']<=1).all()):
             chambers=[0,1]
             # compute number of different layers in each chamber
             n_layer_ch0 = dataframe[dataframe['Chamber']==0]['Layer'].nunique()
             n_layer_ch1 = dataframe[dataframe['Chamber']==1]['Layer'].nunique()
-            
+
             n_layer=[n_layer_ch0, n_layer_ch1]
-            
+
             # require at least 3 different layers for each chamber
             if(n_layer_ch0>=3 and n_layer_ch1>=3):
                 select=True
-                return select, chambers, n_layer
             else:
                 select=False
-                return select, chambers, n_layer
-            
+
+            return select, chambers, n_layer
+
         # hits only in the left side
         elif((dataframe['Chamber']>=2).all()):
             chambers=[2,3]
             # compute number of different layers in each chamber
             n_layer_ch2 = dataframe[dataframe['Chamber']==2]['Layer'].nunique()
-            n_layer_ch3 = dataframe[dataframe['Chamber']==3]['Layer'].nunique() 
-            
+            n_layer_ch3 = dataframe[dataframe['Chamber']==3]['Layer'].nunique()
+
             n_layer=[n_layer_ch2, n_layer_ch3]
-            
+
             # require at least 3 different layers for each chamber
             if(n_layer_ch2>=3 and n_layer_ch3>=3):
                 select=True
-                return select, chambers, n_layer
             else:
                 select=False
-                return select, chambers, n_layer
-        
+
+            return select, chambers, n_layer
+
         # hits in both left and right side
         else:
             select=False
             chambers=[]
             n_layer=[]
             return select, chambers, n_layer
-    
+
     def _Select_Events_Physics(self):
         '''Select good Events (physics)
-        
+
         Returns
         -------
         select : bool
@@ -275,7 +283,7 @@ class Event:
         n_layer : list(int)
             list with the number of different
         '''
-        
+
         dataframe = self.dataframe
         # hits in less than 4 chambers
         if dataframe['Chamber'].nunique() < 4:
@@ -291,60 +299,60 @@ class Event:
                 # compute number of different layers in each chamber
                 n_layer_ch = dataframe[dataframe['Chamber']==n_ch]['Layer'].nunique()
                 n_layer.append(n_layer_ch)
-            
+
                 # require at least 3 different layers for each chamber
-                if n_layer_ch<3: # break if hits in less than 3 layers
+                if n_layer_ch<3: # break if hits in chamber are less than 3 layers
                     select=False
                     chambers = []
                     n_layer = []
                     break
-                else: 
+                else:
                     select=True
             return select, chambers, n_layer
 
-    """def _Local_Fit(self):
+    def _Local_Fit(self):
         #Perform local fit in every chamber
 
         dataframe = self.dataframe
         select, list_chambers, list_layers = self._Select_Events()
         # list to store results for each chamber
-        results={"LocalCoordinates", "GlobalCoordinates"}
+        results=[]#{"LocalCoordinates", "GlobalCoordinates"}
         # loop over the (two) chambers
         for i in range(0,len(list_chambers)):
         # if we have 4 different layers we randomly select a layer to be excluded
         # we will use the point from the excluded layer to check the goodness of the global fit
             if(list_layers[i]==4):
-                rand_layer=random.randint(1,4)
+                rand_layer=np.random.randint(1,4)
             else:
                 rand_layer=0 # layers are 1,2,3,4: excluding layer 0 is equivalent to keeping them all
-            
+
             # create dataframe_cl filtered by chamber and excluded layer
             dataframe_c  = dataframe[dataframe['Chamber']==list_chambers[i]] # dataframe filtered by chamber
             dataframe_cl = dataframe_c[dataframe_c['Layer']!=rand_layer]     # filtered by chamber and excluded layer
-            
+
             # Z local coordinates corresponding to the 4 different layers
             Z=[6.5,19.5, 32.5, 45.5]
-            
+
             # create a list l containing 3 lists of points (z,x), one for each selected layer
             l=[]
-            
+
             # loop over selected layers and fill l
             for layer_index in dataframe_cl['Layer'].unique():
                 XR=np.array(dataframe_cl[dataframe_cl['Layer']==layer_index]['XR_local'])
                 XL=np.array(dataframe_cl[dataframe_cl['Layer']==layer_index]['XL_local'])
-                
-                z=Z[(layer_i        self._event_display = Nonendex-1)] # layer_index is in range [1,4], list index must be in range [0,3]
+
+                z=Z[(layer_index - 1)] # layer_index is in range [1,4], list index must be in range [0,3]
                 l_temp=[]
-                
+
                 for x in XR:
                     l_temp.append((z,x))
                 for x in XL:
-                    l_temp.append((z,x)) 
-                l.append(l_temp) 
-                
+                    l_temp.append((z,x))
+                l.append(l_temp)
+
             # create numpy array with all possible combinations of 3 points p1,p2,p3
             combinations=np.array([(p1,p2,p3) for p1 in l[0] for p2 in l[1] for p3 in l[2]])
-            
+
             # interpolate each combination and select the combination with least chi squared
             min_chisq=100000 # to store minimum chisq
             optimal_comb=np.zeros((3,2)) # to store best combination of points
@@ -365,21 +373,21 @@ class Event:
                     intercept_opt=intercept
                 else:
                     continue
-                    
-            #add to results: results is a list of 2 dictionaries, one for each chamber       
-            results["LocalCoordinates"] = {"slope":slope_opt, 
-                                           "intercept":intercept_opt, 
-                                           "optimal_comb": optimal_comb, 
-                                           "excl_layer": rand_layer}
-                    
-        return results"""
 
-    def _Local_Fit(self):
+            #add to results: results is a list of 2 dictionaries, one for each chamber
+            results.append({"slope":slope_opt,
+                            "intercept":intercept_opt,
+                            "optimal_comb": optimal_comb,
+                            "excl_layer": rand_layer})
+
+        return results
+
+    def _Local_Fit_Agostini(self):
         """Perform local fit in every chamber"""
 
         def make_fit(df):
             '''Local fit
-            
+
             Parameters
             ----------
             df : pandas.dataframe
@@ -405,7 +413,7 @@ class Event:
                 l.append(l_layer)
             # create numpy array with all possible combinations of 3 points p1,p2,p3
             combinations = np.array([(p1,p2,p3) for p1 in l[0] for p2 in l[1] for p3 in l[2]])
-            # interpolate each combination and select the combination with least chi squared
+            # interpolate each combination and select the combination with make_fit(df_chamber_reduced)(df_chamber_reduced)ast chi squared
             min_chisq = 100000 # to store minimum chisq
             for points in combinations:
                 # linear regression
@@ -419,11 +427,12 @@ class Event:
                 chisq, _ = stats.chisquare(X, predict_X)
                 # eventually update min_chisq and optimal_comb
                 if(chisq < min_chisq):
-                    min_chisq = chisq
+                    min_chrand_layer=0 #layers are isq = chisq
                     model = lin_reg # save model with smaller chi^2
                 else:
                     continue
             return model, chisq
+            ####################################################################################
 
         dataframe = self.dataframe
         select, list_chambers, list_layers = self._Select_Events()

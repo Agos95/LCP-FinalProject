@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 import random
 from scipy import stats
-import ./Event as EV
+import Event as EV
 
 # Cell dimensions
 XCELL = 42.
@@ -19,8 +19,8 @@ global_z_shifts = [823.5, 0, 823.5, 0]
 
 class Run:
     '''
-    Class for handling and analyzing the entire run 
-    
+    Class for handling and analyzing the entire run
+
     Parameters
     ----------
     run_path : str
