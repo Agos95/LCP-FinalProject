@@ -23,7 +23,7 @@ class Run:
 
     Parameters
     ----------
-    run_path : str
+    data_path : str
         path to the datafile
 
     isPhysics : bool
@@ -33,9 +33,23 @@ class Run:
     ----------
     isPhysics : bool
         True if physics run, False if calibration
+
+    data_path : str
+        path to the datafile
     '''
 
-    def __init__(self, run_path, isPhysics):
+    def __init__(self, data_path, isPhysics):
         self.isPhysics = isPhysics
+        self.data_path = data_path
+        self.Event_List = []
+
+    def read_events(self):
+    '''Read each line from the file and store the 'Event' object in a list'''
+
+        with open(self.data_path) as f:
+            for line in f:
+                ev = EV.Event(line, isPhysics=self.isPhysics)
+                self.Event_List.append(ev)
+        return
 
 
