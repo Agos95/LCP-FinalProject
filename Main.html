@@ -13087,32 +13087,8 @@ div#notebook {
 <span class="kn">import</span> <span class="nn">glob</span>
 
 <span class="kn">import</span> <span class="nn">Helpers.Event</span> <span class="k">as</span> <span class="nn">EV</span>
+<span class="kn">import</span> <span class="nn">Helpers.Run</span>   <span class="k">as</span> <span class="nn">RUN</span>
 <span class="c1">#get_ipython().run_line_magic(&#39;run&#39;, &#39;Helper.py&#39;)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data_file</span> <span class="o">=</span> <span class="s2">&quot;../data_merged/calibration/Run000260.txt&quot;</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
-    <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
-    <span class="c1">#line = f.readline()</span>
-    <span class="c1">#line = f.readline()</span>
-    <span class="c1">#event = line.split()</span>
-    <span class="c1">#event = [float(i) for i in event]</span>
-    <span class="c1">#print(event)</span>
-    
-<span class="n">ev</span> <span class="o">=</span> <span class="n">EV</span><span class="o">.</span><span class="n">Event</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">isPhysics</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Event Number:&quot;</span><span class="p">,</span> <span class="n">ev</span><span class="o">.</span><span class="n">event_number</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;# Hits:&quot;</span><span class="p">,</span> <span class="n">ev</span><span class="o">.</span><span class="n">hits_number</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13128,10 +13104,82 @@ div#notebook {
     <div class="prompt"></div>
 
 
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>Event Number: 2
-# Hits: 7
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/mnt/DATA/SharedFolders/University/Magistrale/Anno1_Sem1/LabOfComputationalPhysics/LabFiles/FinalProject/files/Helpers/Run.py:7: TqdmExperimentalWarning: Using `tqdm.autonotebook.tqdm` in notebook mode. Use `tqdm.tqdm` instead to force console mode (e.g. in jupyter console)
+  from tqdm.autonotebook import tqdm
 </pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data_file</span> <span class="o">=</span> <span class="s2">&quot;../data_merged/calibration/Run000260.txt&quot;</span>
+<span class="n">run</span> <span class="o">=</span> <span class="n">RUN</span><span class="o">.</span><span class="n">Run</span><span class="p">(</span><span class="n">data_file</span><span class="p">,</span> <span class="n">isPhysics</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">run</span><span class="o">.</span><span class="n">read_events</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_text output_error">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-green-fg">~/miniconda3/lib/python3.7/site-packages/tqdm/notebook.py</span> in <span class="ansi-cyan-fg">status_printer</span><span class="ansi-blue-fg">(_, total, desc, ncols)</span>
+<span class="ansi-green-intense-fg ansi-bold">    102</span>             <span class="ansi-green-fg">if</span> total<span class="ansi-blue-fg">:</span>
+<span class="ansi-green-fg">--&gt; 103</span><span class="ansi-red-fg">                 </span>pbar <span class="ansi-blue-fg">=</span> IntProgress<span class="ansi-blue-fg">(</span>min<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0</span><span class="ansi-blue-fg">,</span> max<span class="ansi-blue-fg">=</span>total<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    104</span>             <span class="ansi-green-fg">else</span><span class="ansi-blue-fg">:</span>  <span class="ansi-red-fg"># No total? Show info style bar with no progress tqdm status</span>
+
+<span class="ansi-red-fg">NameError</span>: name &#39;IntProgress&#39; is not defined
+
+During handling of the above exception, another exception occurred:
+
+<span class="ansi-red-fg">ImportError</span>                               Traceback (most recent call last)
+<span class="ansi-green-fg">&lt;ipython-input-2-4fbcfdd9386b&gt;</span> in <span class="ansi-cyan-fg">&lt;module&gt;</span>
+<span class="ansi-green-intense-fg ansi-bold">      2</span> run <span class="ansi-blue-fg">=</span> RUN<span class="ansi-blue-fg">.</span>Run<span class="ansi-blue-fg">(</span>data_file<span class="ansi-blue-fg">,</span> isPhysics<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">False</span><span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">      3</span> 
+<span class="ansi-green-fg">----&gt; 4</span><span class="ansi-red-fg"> </span>run<span class="ansi-blue-fg">.</span>read_events<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">)</span>
+
+<span class="ansi-green-fg">/mnt/DATA/SharedFolders/University/Magistrale/Anno1_Sem1/LabOfComputationalPhysics/LabFiles/FinalProject/files/Helpers/Run.py</span> in <span class="ansi-cyan-fg">read_events</span><span class="ansi-blue-fg">(self)</span>
+<span class="ansi-green-intense-fg ansi-bold">     55</span>             tot_ev <span class="ansi-blue-fg">=</span> len<span class="ansi-blue-fg">(</span>list<span class="ansi-blue-fg">(</span>f<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">     56</span>         <span class="ansi-green-fg">with</span> open<span class="ansi-blue-fg">(</span>self<span class="ansi-blue-fg">.</span>data_path<span class="ansi-blue-fg">)</span> <span class="ansi-green-fg">as</span> f<span class="ansi-blue-fg">:</span>
+<span class="ansi-green-fg">---&gt; 57</span><span class="ansi-red-fg">             </span><span class="ansi-green-fg">with</span> tqdm<span class="ansi-blue-fg">(</span>total<span class="ansi-blue-fg">=</span>tot_ev<span class="ansi-blue-fg">)</span> <span class="ansi-green-fg">as</span> pbar<span class="ansi-blue-fg">:</span>
+<span class="ansi-green-intense-fg ansi-bold">     58</span>                 <span class="ansi-green-fg">for</span> line <span class="ansi-green-fg">in</span> f<span class="ansi-blue-fg">:</span>
+<span class="ansi-green-intense-fg ansi-bold">     59</span>                     ev <span class="ansi-blue-fg">=</span> EV<span class="ansi-blue-fg">.</span>Event<span class="ansi-blue-fg">(</span>line<span class="ansi-blue-fg">,</span> isPhysics<span class="ansi-blue-fg">=</span>self<span class="ansi-blue-fg">.</span>isPhysics<span class="ansi-blue-fg">)</span>
+
+<span class="ansi-green-fg">~/miniconda3/lib/python3.7/site-packages/tqdm/notebook.py</span> in <span class="ansi-cyan-fg">__init__</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">    211</span>         total <span class="ansi-blue-fg">=</span> self<span class="ansi-blue-fg">.</span>total <span class="ansi-blue-fg">*</span> unit_scale <span class="ansi-green-fg">if</span> self<span class="ansi-blue-fg">.</span>total <span class="ansi-green-fg">else</span> self<span class="ansi-blue-fg">.</span>total
+<span class="ansi-green-intense-fg ansi-bold">    212</span>         self.container = self.status_printer(
+<span class="ansi-green-fg">--&gt; 213</span><span class="ansi-red-fg">             self.fp, total, self.desc, self.ncols)
+</span><span class="ansi-green-intense-fg ansi-bold">    214</span>         self<span class="ansi-blue-fg">.</span>sp <span class="ansi-blue-fg">=</span> self<span class="ansi-blue-fg">.</span>display
+<span class="ansi-green-intense-fg ansi-bold">    215</span> 
+
+<span class="ansi-green-fg">~/miniconda3/lib/python3.7/site-packages/tqdm/notebook.py</span> in <span class="ansi-cyan-fg">status_printer</span><span class="ansi-blue-fg">(_, total, desc, ncols)</span>
+<span class="ansi-green-intense-fg ansi-bold">    109</span>             <span class="ansi-red-fg"># #187 #451 #558</span>
+<span class="ansi-green-intense-fg ansi-bold">    110</span>             raise ImportError(
+<span class="ansi-green-fg">--&gt; 111</span><span class="ansi-red-fg">                 </span><span class="ansi-blue-fg">&#34;IntProgress not found. Please update jupyter and ipywidgets.&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    112</span>                 <span class="ansi-blue-fg">&#34; See https://ipywidgets.readthedocs.io/en/stable&#34;</span>
+<span class="ansi-green-intense-fg ansi-bold">    113</span>                 &#34;/user_install.html&#34;)
+
+<span class="ansi-red-fg">ImportError</span>: IntProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html</pre>
 </div>
 </div>
 
