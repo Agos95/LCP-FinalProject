@@ -225,7 +225,7 @@ class Event:
         dataframe = self.dataframe
         # if we have less than 6 hits or more than 20
         # mark the event as 'bad'
-        if (self.hits < 6 or self.hits_number > 20):
+        if (self.hits_number < 6 or self.hits_number > 20):
             select=False
             chambers=[]
             n_layer=[]
