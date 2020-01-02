@@ -230,3 +230,132 @@ def Select_Events_Calibration(dataframe, hits_number):
         n_layer=[]
         return select, chambers, n_layer
 
+def Local_Fit(dataframe, list_chambers, list_layers):
+    ''' Local fit for each chamber; fit is performed using 3 layers
+
+
+    '''
+    # list to store results for each chamber
+    results = []
+    # loop over the (two) chambers
+    for i in range(0,len(list_chambers)):
+        # if we have 4 different layers we randomly select a layer to be excluded
+        # we will use the point from the excluded layer to check the goodness of the global fit
+        if(list_layers[i]==4):
+            rand_layer = np.random.randint(1,4)
+        else:
+            rand_layer = 0 #layers are 1,2,3,4: excluding layer 0 is equivalent to keeping them all
+
+        # create dataframe_cl filtered by chamber and excluded layer
+        dataframe_c  = dataframe[dataframe['Chamber']==list_chambers[i]] # dataframe filtered by chamber
+        dataframe_cl = dataframe_c[dataframe_c['Layer']!=rand_layer]     # filtered by chamber and excluded layer
+
+        # Z local coordinates corresponding to the 4 different layers
+        Z = [6.5, 19.5, 32.5, 45.5]
+
+        # create a list l containing 3 lists of points (z,x), one for each selected layer
+        l = []
+
+        # loop over selected layers and fill l
+        for layer_index in dataframe_cl['Layer'].unique():
+            # save local coordinates in order to avoid working with negative numbers
+            # that can lead to negative values of chi^2
+            XR = np.array(dataframe_cl[dataframe_cl['Layer']==layer_index]['XR_local'])
+            XL = np.array(dataframe_cl[dataframe_cl['Layer']==layer_index]['XL_local'])
+
+            z = Z[(layer_index-1)] # layer_index is in range [1,4], list index must be in range [0,3]
+            l_temp = []
+
+            for x in XR:
+                l_temp.append((z,x))
+            for x in XL:
+                l_temp.append((z,x))
+            l.append(l_temp)
+
+        #create numpy array with all possible combinations of 3 points p1,p2,p3
+        combinations = np.array([(p1,p2,p3) for p1 in l[0] for p2 in l[1] for p3 in l[2]])
+
+        #interpolate each combination and select the combination with least chi squared
+        min_chisq = 100000 # to store minimum chisq
+        optimal_comb = np.zeros((3,2)) # to store best combination of points
+        slope_opt = 0     # to store slope obtained with the best combination
+        intercept_opt = 0 # to store intercept obtained with the best combination
+        for points in combinations:
+            # linear regression
+            slope, intercept, _, _, _ =stats.linregress(points[:,0],points[:,1])
+            # compute expected x using the interpolating function
+            expect_x = intercept+slope*(points[:,0])
+            # compute chi squared
+            chisq, _ = stats.chisquare(points[:,1],expect_x)
+            # eventually update min_chisq and optimal_comb
+            if(chisq < min_chisq):
+                min_chisq     = chisq
+                optimal_comb  = points
+                slope_opt     = slope
+                intercept_opt = intercept
+            else:
+                continue
+
+        # add to results: results is a list of 2 dictionaries, one for each chamber
+        results.append({"slope"       : slope_opt,
+                        "intercept"   : intercept_opt,
+                        "optimal_comb": optimal_comb,
+                        "excl_layer"  : rand_layer})
+
+    return results
+
+def global_fit(dataframe, list_chambers, lfit_results):
+
+    #TRANSFORM LOCAL COORDINATES IN GLOBAL COORDINATES
+
+    #First chamber:
+    global_z_ch1 = global_z_shifts[list_chambers[0]]+lfit_results[0]["optimal_comb"][:,0]
+    global_x_ch1 = global_x_shifts[list_chambers[0]]-lfit_results[0]["optimal_comb"][:,1]
+    global_ch1=np.column_stack((global_z_ch1, global_x_ch1))
+
+    #Second chamber:
+    global_z_ch2 = global_z_shifts[list_chambers[1]]+lfit_results[1]["optimal_comb"][:,0]
+    global_x_ch2 = global_x_shifts[list_chambers[1]]-lfit_results[1]["optimal_comb"][:,1]
+    global_ch2=np.column_stack((global_z_ch2, global_x_ch2))
+
+    points=np.concatenate((global_ch1, global_ch2))
+    #print(points)
+    #LINEAR REGRESSION
+    slope, intercept, r_value, p_value, std_err=stats.linregress(points[:,0],points[:,1])
+
+    #compute expected x using the interpolating function
+    expect_x=intercept+slope*(points[:,0])
+
+    #COMPUTE RESIDUALS USING TEST LAYER (layer excluded in local fit function)
+    # Z local coordinates corresponding to the 4 different layers
+    Z_local=[6.5,19.5, 32.5, 45.5]
+    #list to store residuals
+    res=[]
+    #compute residuals for each chamber
+    for c in range(0,len(list_chambers)):
+        dataframe_c = dataframe[dataframe['Chamber']==list_chambers[c]] #dataframe filtered by chamber
+        res_temp=[]
+        excl_layer=lfit_results[c]["excl_layer"]
+        #test layer Z global coordinate
+        Z_test_layer=global_z_shifts[c]+Z_local[(excl_layer-1)]
+        #if there were only 3 layers, excl_layer was set to 0:
+        if(excl_layer!=0):
+            expect_x=intercept+slope*(Z_test_layer)
+            XR=np.array(dataframe_c[dataframe_c['Layer']==excl_layer]['XR_global'])
+            XL=np.array(dataframe_c[dataframe_c['Layer']==excl_layer]['XL_global'])
+            for i in range(0,XR.size):
+                res_temp.append(XR[i]-expect_x)
+            for i in range(0,XL.size):
+                res_temp.append(XL[i]-expect_x)
+
+            res_temp.sort(key=fabs) #we want the smallest residual in absolute value
+            res.append(res_temp[0])
+        else:
+            res=[]
+    #convert list res in numpy array
+    res=np.array(res)
+    #plt.plot(points[:,0],points[:,1], 'o')
+    #plt.plot(points[:,0],intercept+slope*points[:,0], 'r')
+    #plt.show()
+    return {"slope": slope, "intercept": intercept, "residuals": res }
+
