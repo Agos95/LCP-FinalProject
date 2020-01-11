@@ -4,6 +4,7 @@ from math import fabs
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from scipy import stats
+from scipy.optimize import curve_fit
 from os.path import exists
 
 # Cell dimensions
@@ -583,3 +584,27 @@ def Global_Fit_Physics(dataframe, list_layers):
                  "residuals" : residuals}
 
     return g_results
+
+def Gaussian_Fit_Hist(ax, data, nbins=None, hist_range=None, **kwargs):
+
+    def Gaussian(x,A, mu, sigma):
+        return A * np.exp(-1.0 * (x - mu)**2 / (2 * sigma**2))
+
+    hist, bins, _ = ax.hist(data, bins=nbins, range=hist_range, **kwargs)
+    centers = (bins[:-1] + bins[1:]) / 2
+    #area = sum(np.diff(bins)*hist)
+    popt3, pcov3 = curve_fit(Gaussian, xdata=centers, ydata=hist)
+    A, mu, sigma = popt3
+    dA, dmu, dsigma = [np.sqrt(pcov3[j,j]) for j in range(popt3.size)]
+    x = np.linspace(bins.min(),bins.max(), 100)
+
+    ax.plot(x, Gaussian(x, A, mu, sigma), color='C1', linestyle="-.", linewidth=2, label=r'$f(x) = A\,e^{-(x-\mu)^2/2\sigma^2}$')
+    ax.errorbar(centers, hist, ecolor="red", elinewidth=1, fmt="ro", markersize=.75, yerr=np.sqrt(hist))
+    textstr = '\n'.join(('$A$ = {0:0.2f}$\pm${1:0.2f}'.format(A, dA),
+                         '$\mu$ = {0:0.4f}$\pm${1:0.4f}'.format(mu, dmu),
+                         '$\sigma$ = {0:0.4f}$\pm${1:0.4f}'.format(sigma, dsigma)))
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax.text(0.02, 0.95, textstr, transform=ax.transAxes, fontsize=15,
+              verticalalignment='top', bbox=props)
+    #return A, mu, sigma, dA, dmu, dsigma, centers
+    return
