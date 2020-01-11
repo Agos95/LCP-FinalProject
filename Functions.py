@@ -2,9 +2,9 @@ import numpy  as np
 import pandas as pd
 from math import fabs
 import matplotlib.pyplot as plt
-import statsmodels.api   as sm
 from matplotlib.patches import Polygon
 from scipy import stats
+from os.path import exists
 
 # Cell dimensions
 XCELL = 42.
@@ -113,6 +113,11 @@ def Plot_Background():
     ax_3 = plt.subplot2grid(gridsize, (3, 0), colspan=1, rowspan=1) # bottom-left
 
     axes = [ax_global, ax_0, ax_1, ax_2, ax_3]
+
+    if exists("./wire_pos_glob.txt"):
+        wires = np.loadtxt("./wire_pos_glob.txt")
+    else: wires = None
+
     for index, ax in enumerate(axes):
         ax.set_xlim(x_lim[index])
         ax.set_ylim(y_lim[index])
@@ -124,6 +129,8 @@ def Plot_Background():
         for j in range(4):
             chamber = chamber_position[chamber_position["chamber"] == j]
             ax.fill(chamber["x_vertices"].values[0], chamber["y_vertices"].values[0], color='gray', fill=False)
+        if wires is not None:
+            ax.plot(wires[:,0], wires[:,1], marker=".", markersize=.5, linestyle="", color="gray")
     return axes
 
 def Plot_Events(dataframe, evNumber):
@@ -157,7 +164,6 @@ def Plot_Events(dataframe, evNumber):
 
     return plots
 
-#def plot_fit(dataframe, evNumber, chambers, lf_results, gf_results):
 def Plot_Fit(ev, plots, calibration=False):
     # obtaine object from event dictionary
     dataframe = ev["Dataframe"]
@@ -180,15 +186,17 @@ def Plot_Fit(ev, plots, calibration=False):
             intercept_loc = global_x_shifts[ch]-lf_results[idx]['intercept']-slope_loc*global_z_shifts[ch]
             for image in plots:
                 image.plot(slope_loc*z_glob+intercept_loc, z_glob, linestyle='--', color="C9")
-        gf_results = [Global_Fit(dataframe, chambers, lf_results)]
+        gf_results = [Global_Fit_Calibration(dataframe, chambers, lf_results)]
         for gf in gf_results:
             slope=gf['slope']
             intercept=gf['intercept']
             for image in plots:
                 image.plot(slope*z_glob+intercept, z_glob, color='navy')
     else:
-        gf_results = Global_Fit_Combinations(dataframe, chambers, layers)
-        for gf in gf_results:
+        df_left, df_right, _, _ = Points_Filter(dataframe)
+        gf_results_left  = Global_Fit_Physics(df_left , layers[0])
+        gf_results_right = Global_Fit_Physics(df_right, layers[1])
+        for gf in [gf_results_left, gf_results_right]:
             slope = gf['slope']
             intercept = gf['intercept']
             for image in plots:
@@ -230,8 +238,8 @@ def Select_Events_Calibration(dataframe, hits_number):
         True if the event pass the selection, False otherwise
     chambers : list(int)
         list with the number of the chambers where we find the hits
-    n_layer : list(list(int))
-        list with 2 lists with the number of different layers per chamber
+    n_layer : list(int)
+        list with the number of different layers hit per chamber
     '''
 
     # hits only in the right side
@@ -282,6 +290,22 @@ def Select_Events_Calibration(dataframe, hits_number):
             n_layer=[]
 
     return select, chambers, n_layer
+
+def Points_Filter(dataframe):
+
+    # left detector part (chamber 2,3)
+    df_left  = dataframe[dataframe["Chamber"]>=2]
+    df_left_filtered = df_left[df_left['XL_local']>=0]
+    df_left_filtered = df_left_filtered[df_left_filtered['XL_local']<=200]
+    number_hits_left  = len(df_left_filtered)
+
+    # right detector part (chamber 0,1)
+    df_right = dataframe[dataframe["Chamber"]<=1]
+    df_right_filtered = df_right[df_right['XL_local']>=540]
+    df_right_filtered = df_right_filtered[df_right_filtered['XL_local']<=720]
+    number_hits_right = len(df_right_filtered)
+
+    return df_left_filtered, df_right_filtered, number_hits_left,number_hits_right
 
 def Local_Fit(dataframe, list_chambers, list_layers, exclusion_layer=False):
     ''' Local fit for each pair of chambers (left or right side); best combination of points is the one with the lowest chi^2
@@ -379,7 +403,7 @@ def Local_Fit(dataframe, list_chambers, list_layers, exclusion_layer=False):
 
     return results
 
-def Global_Fit(dataframe, list_chambers, lfit_results):
+def Global_Fit_Calibration(dataframe, list_chambers, lfit_results):
     ''' Global fit for left (right) side using the points selected by Local_Fit
 
     Parameters
@@ -456,7 +480,8 @@ def Global_Fit(dataframe, list_chambers, lfit_results):
 
     return g_results
 
-def Global_Fit_Combinations(dataframe, list_chambers, list_layers):
+#def Global_Fit_Physics(dataframe, list_chambers, list_layers):
+def Global_Fit_Physics(dataframe, list_layers):
     ''' Global fit for left (right) side using all the points recorded; best combination of points is the one with the lowest chi^2
 
     Parameters
@@ -483,6 +508,8 @@ def Global_Fit_Combinations(dataframe, list_chambers, list_layers):
     g_results=[]
     #create a list l containing lists of points (z,x), one for each selected layer
     l=[]
+    # list of chambers
+    list_chambers = dataframe["Chamber"].unique()
     #loop over the (two) chambers
     for i in range(0,len(list_chambers)):
         #create dataframe_cl filtered by chamber and excluded layer
@@ -506,7 +533,7 @@ def Global_Fit_Combinations(dataframe, list_chambers, list_layers):
                 l_temp.append((z,x))
             l.append(l_temp)
 
-   # print(len(l))
+    # print(len(l))
     #create numpy array with all possible combinations of 3 (4) points p1,p2,p3(,p4)
     #print(list_layers)
     total_layers=list_layers[0]+list_layers[1]
@@ -520,17 +547,17 @@ def Global_Fit_Combinations(dataframe, list_chambers, list_layers):
         print("ERROR, Unexpected number of layers")
         g_results = {"slope" : np.nan,
                      "intercept" : np.nan,
-                     "optimal_comb" : []}
+                     "residuals" : []}
         return g_results
 
     #interpolate each combination and select the combination with least chi squared
     min_chisq=100000 #to store minimum chisq
-    if(total_layers==6):
+    """if(total_layers==6):
         optimal_comb=np.zeros((6,2)) #to store best combination of points with hit in 6 layer
     elif(total_layers==7):
         optimal_comb=np.zeros((7,2)) #to store best combination of points with hit in 7 layer
     elif(total_layers==8):
-        optimal_comb=np.zeros((8,2)) #to store best combination of points with hit in 8 layer
+        optimal_comb=np.zeros((8,2)) #to store best combination of points with hit in 8 layer"""
 
     slope_opt=0 #to store slope obtained with the best combination
     intercept_opt=0 #to store intercept obtained with the best combination
@@ -544,7 +571,7 @@ def Global_Fit_Combinations(dataframe, list_chambers, list_layers):
         #eventually update min_chisq and optimal_comb
         if(fabs(chisq) < min_chisq):
             min_chisq=fabs(chisq)
-            optimal_comb=points
+            residuals = np.subtract(points[:,1], expect_x).tolist()
             slope_opt=slope
             intercept_opt=intercept
         else:
@@ -553,6 +580,6 @@ def Global_Fit_Combinations(dataframe, list_chambers, list_layers):
     #add to results
     g_results = {"slope" : slope_opt,
                  "intercept" : intercept_opt,
-                 "optimal_comb" : optimal_comb}
+                 "residuals" : residuals}
 
     return g_results
