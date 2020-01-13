@@ -3,7 +3,6 @@ font = ("bitstream charter", 14, "")
 import numpy as np
 import matplotlib.pyplot as plt
 hist_kwargs = {"edgecolor":"black"}
-import matplotlib
 
 from Functions import *
 
@@ -35,11 +34,13 @@ def Open_File_Calibration(data_file):
                     "Layers"    : n_layers
                 }
             )
+            # GUI progress bar
             sg.OneLineProgressMeter('File Loader', len(Ev_list), tot_ev, 'Reading CALIBRATION file', orientation="h", size=(30,30))
 
     print("{:35} = {:d}"    .format("Total number of events in the Run", tot_ev))
     print("{:35} = {:d}"    .format("Number of accepted events"        , selected_ev))
     print("{:35} = {:.4f} %".format("Fraction of accepted events"      , selected_ev/tot_ev*100))
+    # create a pop up for the GUI with summary information
     sg.Popup("{:} = {:d}"    .format("Total number of events in the Run", tot_ev),
              "{:} = {:d}"    .format("Number of accepted events"        , selected_ev),
              "{:} = {:.4f} %".format("Fraction of accepted events"      , selected_ev/tot_ev*100),
@@ -79,7 +80,7 @@ def Calibration(Ev_list):
             # local fit differences
             lf_diff["slope"]    .append(lf_results[0]["slope"]    -lf_results[1]["slope"])
             lf_diff["intercept"].append(lf_results[0]["intercept"]-lf_results[1]["intercept"])
-
+        # GUI progress bar
         sg.OneLineProgressMeter('File Analyzer', idx+1, tot_ev, 'Analyzing CALIBRATION file', orientation="h", size=(30,30))
 
     fig, ax = plt.subplots(figsize=(8,5))
@@ -88,31 +89,26 @@ def Calibration(Ev_list):
     ax.set_xlabel("number of hits")
     fig.show()
 
-
     fig, (ax1, ax2) = plt.subplots(figsize=(15,5), ncols=2)
     fig.suptitle("X position in local chambers coordinates", fontsize=16)
-
     ax1.set_title("Up", fontsize=14)
     ax1.hist(X_position["up"]    , bins=30, **hist_kwargs)
     ax1.set_xlabel("x [mm]")
-
+    #
     ax2.set_title("Down", fontsize=14)
     ax2.hist(X_position["down"], bins=30, **hist_kwargs)
     ax2.set_xlabel("x [mm]")
-
     fig.show()
 
     fig, (ax1, ax2) = plt.subplots(figsize=(15,5), ncols=2)
     fig.suptitle("Differences between local fits results", fontsize=16)
-
     ax1.set_title("Slope")
     Gaussian_Fit_Hist(ax1, lf_diff["slope"],     nbins=30, hist_range=(-0.5,0.5), **hist_kwargs)
     ax1.set_xlabel("Slope")
-
+    #
     ax2.set_title("Intercept")
     Gaussian_Fit_Hist(ax2, lf_diff["intercept"], nbins=30, hist_range=(-100,100), **hist_kwargs)
     ax2.set_xlabel("[mm]")
-
     fig.show()
 
     Hit_6_layers = 0
@@ -134,7 +130,7 @@ def Calibration(Ev_list):
     ax1.set_title("Residuals of the points in the excluded layers", fontsize=14)
     Gaussian_Fit_Hist(ax1, Tot_res, nbins= 30, hist_range=(-20,20), **hist_kwargs)
     ax1.set_xlabel("[mm]")
-
+    #
     labels = ['Hit in 8 layers', 'Hit in 7 layers', 'Hit in 6 layers']
     sizes  = [Hit_8_layers/len(Ev_residuals)*100,
               Hit_7_layers/len(Ev_residuals)*100,
@@ -144,7 +140,6 @@ def Calibration(Ev_list):
     ax2.legend(patches, labels, loc='upper right', fontsize=14)
     ax2.axis('equal')
     ax2.set_title("Percentage of excluded layers in the fit", fontsize=14)
-
     fig.show()
 
     return Ev_residuals, X_position, lf_diff
@@ -185,6 +180,7 @@ def Open_File_Physics(data_file):
     print("{:35} = {:d}"     .format("Total number of events in the Run", tot_ev))
     print("{:35} = {:d}"     .format("Number of accepted events"        , selected_ev))
     print("{:35} = {:.4f} %" .format("Fraction of accepted events"      , selected_ev/tot_ev*100))
+    # create a pop up for the GUI with summary information
     sg.Popup("{:} = {:d}"    .format("Total number of events in the Run", tot_ev),
              "{:} = {:d}"    .format("Number of accepted events"        , selected_ev),
              "{:} = {:.4f} %".format("Fraction of accepted events"      , selected_ev/tot_ev*100),
@@ -221,7 +217,7 @@ def Physics(Ev_list):
             # save residuals
             Ev_residuals["left"]  += gf_results_left ["residuals"]
             Ev_residuals["right"] += gf_results_right["residuals"]
-
+        # GUI progress bar
         sg.OneLineProgressMeter('File Analyzer', idx+1, tot_ev, 'Analyzing PHYSICS file', orientation="h", size=(30,30))
 
     fig, (ax1, ax2) = plt.subplots(figsize=(15,5), ncols=2)
@@ -332,6 +328,7 @@ def Plot_Background_GUI():
                 [ -25,   75]]  # chamber 3
     title = ["DETECTOR", "Chamber 0", "Chamber 1", "Chamber 2", "Chamber 3"]
     # create pyplot 'Axes' objects
+    # different dimensions and positions with respect to the notebook one
     gridsize = (7, 10)
     ax_global = plt.subplot2grid(gridsize, (0, 0), colspan=4, rowspan=7)
     ax_0 = plt.subplot2grid(gridsize, (0, 8), colspan=2, rowspan=3) # top-right
