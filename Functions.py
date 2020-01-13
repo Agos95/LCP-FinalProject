@@ -246,7 +246,7 @@ def Select_Events_Calibration(dataframe, hits_number):
     # hits only in the right side
     # if we have less than 6 hits or more than 20
     # mark the event as 'bad'
-    if (hits_number < 6 or hits_number > 20):
+    if (hits_number < 6 or hits_number > 12):
             select=False
             chambers=[]
             n_layer=[]
