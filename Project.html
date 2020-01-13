@@ -2,7 +2,7 @@
 <html>
 <head><meta charset="utf-8" />
 
-<title>LCP_FuncModule</title>
+<title>Project</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -13077,16 +13077,9 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="LCP-Final-Project---Module-of-functions">LCP Final Project - Module of functions<a class="anchor-link" href="#LCP-Final-Project---Module-of-functions">&#182;</a></h1>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>This file includes all the necessary functions that will be employed as building blocks of the Analysis carried out in the main file. 
-<br>
-A short, general description can be found at the beginning of each, together with lists of needed inputs and outputs. A complementary documentation is also present within the code itself, stressing a more programming-oriented perspective.</p>
+<h1 id="Tracking-muons-with-4-Drift-Tubes-chambers-setup">Tracking muons with 4 Drift Tubes chambers setup<a class="anchor-link" href="#Tracking-muons-with-4-Drift-Tubes-chambers-setup">&#182;</a></h1><h3 id="Description">Description<a class="anchor-link" href="#Description">&#182;</a></h3><p>The project consist in the analysis of the data gathered by four drift-tubes detectors during a beam test aimed at the production of $\mu^+ - \mu^-$ pairs. This was achieved by shooting 45 GeV positrons on a Beryllium target. Most of the collisons yielded background events (e.g. Bhabha scattering events), whereas only a small fraction produced an actual muons pair. A signal event would consist of two tracks, each traversing two muon detectors (as a dipole magnet deflected in different directions the positively and the negatively charged particles).</p>
+<p>The following figure displays a signal event. It is possible to notice the positioning of the four drift-tubes detectors. Particles are moving essentially along the $z$ axis (the beam direction) while the bending due to the dipole magnet occures along the $x$ axis. The $y$ coordinate is irrelevant in this context as it was not measured. 
+<img src="./Figure_1228.png" alt="alt text"></p>
 
 </div>
 </div>
@@ -13094,46 +13087,34 @@ A short, general description can be found at the beginning of each, together wit
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Preliminaries">Preliminaries<a class="anchor-link" href="#Preliminaries">&#182;</a></h2>
+<p>Calibration runs were taken too, by shouting directly positive muons at a given energy on the target, e.g. they consist of single tracks on either of the two sides of the apparatus as shown in the following picture. Which side of the apparatus was determined by the sign of the current powering the magnet.</p>
+<p><img src="./Figure_r261_19.png" alt="alt text"></p>
+
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Packages-imports">Packages imports<a class="anchor-link" href="#Packages-imports">&#182;</a></h3>
+<p>Each detector consists of four layers of drift-tubes, i.e. cells with an anodic wire at the center and cathods at the sides filled up with a gas mixture of ${\rm Ar-CO_2}$ ($85\%-15\%$). The passage of a charged particle through a cell would ionize the gas, with a consequent drift of electrons towards the anodic wire. Exploiting a linear relation (the drift velocity inside the cell is constant), by measuring the time of arrival of the primary ionization, it is possible to reconstruct the track's position within the cell. Note that there is a left-right ambiguity in the determination of the position (blue-red dots in the display).</p>
+<p>The following picture shows the hits left by the muons passing through one fo the detectors (the straight lines represent fits to the recorded hits, we will come to that later). The anodic wires (not drawn) sit at the center of the cells.
+<img src="./Figure_1228_zoom.png" alt="alt text"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>As it can be seen, the layers are staggered by half a cell.</p>
+<p>The relevant dimensions and the overall coordinate transformations in $z$ and $x$ are given below. Note that all the quantities are expressed in $mm$.</p>
+
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span>  <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">fabs</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">statsmodels.api</span>   <span class="k">as</span> <span class="nn">sm</span>
-<span class="kn">from</span> <span class="nn">matplotlib.patches</span> <span class="k">import</span> <span class="n">Polygon</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">stats</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Coordinates-transformation">Coordinates transformation<a class="anchor-link" href="#Coordinates-transformation">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Cell dimensions</span>
@@ -13144,7 +13125,7 @@ A short, general description can be found at the beginning of each, together wit
 <span class="n">global_x_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">994.2</span><span class="p">,</span> <span class="mf">947.4</span><span class="p">,</span><span class="o">-</span><span class="mf">267.4</span><span class="p">,</span><span class="o">-</span><span class="mf">261.5</span><span class="p">,]</span>
 
 <span class="c1"># Z coordinates translations</span>
-<span class="n">local_z_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="n">z</span><span class="o">*</span><span class="n">ZCELL</span> <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">)]</span>
+<span class="n">local_z_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="n">z</span><span class="o">*</span><span class="n">ZCELL</span> <span class="k">for</span> <span class="n">z</span>  <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">)]</span>
 <span class="n">global_z_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">823.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">823.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
 </pre></div>
 
@@ -13156,1027 +13137,86 @@ A short, general description can be found at the beginning of each, together wit
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Functions">Functions<a class="anchor-link" href="#Functions">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Read_Data"><code>Read_Data</code><a class="anchor-link" href="#Read_Data">&#182;</a></h3><ul>
-<li><strong>Input</strong><ul>
-<li>Single line of the chosen data file, corresponding to one event </li>
-</ul>
-</li>
-<li><strong>Output</strong><ul>
-<li><code>Pandas Dataframe</code> representing the event, where each row corresponds to one hit</li>
-<li>numbering of the event within the run </li>
-<li>number of hits in the event</li>
-</ul>
-</li>
-</ul>
-<p>This function takes in input one event at a time, and then outputs a <code>Pandas Dataframe</code> containing the pieces of information available for each event in a readable and usable format.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Read_Data</span><span class="p">(</span><span class="n">event_str</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Reads input event as string and create the Dataframe</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    event_str : str</span>
-<span class="sd">        Single line of the data file</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    dataframe : pandas.dataframe</span>
-<span class="sd">        Pandas Dataframe with all the information about the Event;</span>
-<span class="sd">        each row is a single hit recorded in the Event</span>
-<span class="sd">    event_number : int</span>
-<span class="sd">        number of the Event in the run</span>
-<span class="sd">    hits_number : int</span>
-<span class="sd">        number of hits in the Event</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="n">event</span>        <span class="o">=</span> <span class="n">event_str</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-    <span class="n">event_number</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">event</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">hits_number</span>  <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">event</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="k">if</span> <span class="n">hits_number</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">hit</span>       <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
-        <span class="n">chamber</span>   <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
-        <span class="n">layer</span>     <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
-        <span class="n">xl_local</span>  <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
-        <span class="n">xr_local</span>  <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
-        <span class="n">z_local</span>   <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
-        <span class="n">time</span>      <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
-        <span class="n">xl_global</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
-        <span class="n">xr_global</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
-        <span class="n">z_global</span>  <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">hit</span>       <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">hits_number</span><span class="p">)</span>
-        <span class="n">chamber</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">event</span><span class="p">[</span><span class="mi">2</span><span class="o">+</span><span class="mi">5</span><span class="o">*</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">hits_number</span><span class="p">)),</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">layer</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">event</span><span class="p">[</span><span class="mi">3</span><span class="o">+</span><span class="mi">5</span><span class="o">*</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">hits_number</span><span class="p">)),</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">xl_local</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">event</span><span class="p">[</span><span class="mi">4</span><span class="o">+</span><span class="mi">5</span><span class="o">*</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">hits_number</span><span class="p">)),</span> <span class="nb">float</span><span class="p">)</span>
-        <span class="n">xr_local</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">event</span><span class="p">[</span><span class="mi">5</span><span class="o">+</span><span class="mi">5</span><span class="o">*</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">hits_number</span><span class="p">)),</span> <span class="nb">float</span><span class="p">)</span>
-        <span class="n">z_local</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">local_z_shifts</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">ZCELL</span><span class="o">/</span><span class="mi">2</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">layer</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
-        <span class="n">time</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">event</span><span class="p">[</span><span class="mi">6</span><span class="o">+</span><span class="mi">5</span><span class="o">*</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">hits_number</span><span class="p">)),</span> <span class="nb">float</span><span class="p">)</span>
-        <span class="n">xl_global</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">global_x_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">chamber</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-</span> <span class="n">xl_local</span>
-        <span class="n">xr_global</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">global_x_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">chamber</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-</span> <span class="n">xr_local</span>
-        <span class="n">z_global</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">global_z_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">chamber</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span> <span class="o">+</span> <span class="n">z_local</span>
-    <span class="n">dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-        <span class="s1">&#39;EvNumber&#39;</span> <span class="p">:</span> <span class="n">event_number</span><span class="p">,</span>
-        <span class="s1">&#39;Hit&#39;</span>      <span class="p">:</span> <span class="n">hit</span><span class="p">,</span>
-        <span class="s1">&#39;Chamber&#39;</span>  <span class="p">:</span> <span class="n">chamber</span><span class="p">,</span>
-        <span class="s1">&#39;Layer&#39;</span>    <span class="p">:</span> <span class="n">layer</span><span class="p">,</span>
-        <span class="s1">&#39;XL_local&#39;</span> <span class="p">:</span> <span class="n">xl_local</span><span class="p">,</span>
-        <span class="s1">&#39;XR_local&#39;</span> <span class="p">:</span> <span class="n">xr_local</span><span class="p">,</span>
-        <span class="s1">&#39;Z_local&#39;</span>  <span class="p">:</span> <span class="n">z_local</span><span class="p">,</span>
-        <span class="s1">&#39;Time&#39;</span>     <span class="p">:</span> <span class="n">time</span><span class="p">,</span>
-        <span class="s1">&#39;XL_global&#39;</span><span class="p">:</span> <span class="n">xl_global</span><span class="p">,</span>
-        <span class="s1">&#39;XR_global&#39;</span><span class="p">:</span> <span class="n">xr_global</span><span class="p">,</span>
-        <span class="s1">&#39;Z_global&#39;</span> <span class="p">:</span> <span class="n">z_global</span><span class="p">,</span>
-        <span class="p">})</span>
-    <span class="k">return</span> <span class="n">dataframe</span><span class="p">,</span> <span class="n">event_number</span><span class="p">,</span> <span class="n">hits_number</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Plot_Background"><code>Plot_Background</code><a class="anchor-link" href="#Plot_Background">&#182;</a></h3><ul>
-<li><strong>Input</strong><ul>
-<li>None</li>
-</ul>
-</li>
-<li><strong>Output</strong> <ul>
-<li>list of <code>pyplot Axes</code></li>
-</ul>
-</li>
-</ul>
-<p>A plot with 5 subplots is given as output: a global image of the whole detector and 4 zooms for each chamber. This will consitute the background for event plotting and fitting.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Plot_Background</span><span class="p">():</span>
-    <span class="sd">&#39;&#39;&#39;Makes the plot for the background of the event display</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    None</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    axes : list(pyplot.axes)</span>
-<span class="sd">        background images of the detector and the chambers</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="c1"># create Pandas DataFrame for the chambers positions</span>
-    <span class="n">chamber_position</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-    <span class="s1">&#39;chamber&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)],</span>
-    <span class="s1">&#39;x_vertices&#39;</span> <span class="p">:</span> <span class="p">[(</span><span class="n">global_x_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">global_x_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">720</span><span class="p">,</span> <span class="n">global_x_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">720</span><span class="p">,</span> <span class="n">global_x_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)],</span>
-    <span class="s1">&#39;y_vertices&#39;</span> <span class="p">:</span> <span class="p">[(</span><span class="n">global_z_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">global_z_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">global_z_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">52</span><span class="p">,</span> <span class="n">global_z_shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">52</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)],</span>
-    <span class="p">})</span>
-    <span class="n">x_lim</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span> <span class="c1"># global detector</span>
-                <span class="p">[</span>    <span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span> <span class="c1"># chamber 0</span>
-                <span class="p">[</span>    <span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span> <span class="c1"># chamber 1</span>
-                <span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">,</span>    <span class="mi">0</span><span class="p">],</span> <span class="c1"># chamber 2</span>
-                <span class="p">[</span><span class="o">-</span><span class="mi">1000</span><span class="p">,</span>    <span class="mi">0</span><span class="p">]]</span> <span class="c1"># chamber 3</span>
-    <span class="n">y_lim</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span>  <span class="c1"># global detector</span>
-                <span class="p">[</span><span class="mi">800</span> <span class="p">,</span>  <span class="mi">900</span><span class="p">],</span>  <span class="c1"># chamber 0</span>
-                <span class="p">[</span> <span class="o">-</span><span class="mi">25</span><span class="p">,</span>   <span class="mi">75</span><span class="p">],</span>  <span class="c1"># chamber 1</span>
-                <span class="p">[</span> <span class="mi">800</span><span class="p">,</span>  <span class="mi">900</span><span class="p">],</span>  <span class="c1"># chamber 2</span>
-                <span class="p">[</span> <span class="o">-</span><span class="mi">25</span><span class="p">,</span>   <span class="mi">75</span><span class="p">]]</span>  <span class="c1"># chamber 3</span>
-    <span class="n">title</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;DETECTOR&quot;</span><span class="p">,</span> <span class="s2">&quot;Chamber 0&quot;</span><span class="p">,</span> <span class="s2">&quot;Chamber 1&quot;</span><span class="p">,</span> <span class="s2">&quot;Chamber 2&quot;</span><span class="p">,</span> <span class="s2">&quot;Chamber 3&quot;</span><span class="p">]</span>
-    <span class="c1"># create pyplot &#39;Axes&#39; objects</span>
-    <span class="n">gridsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">ax_global</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span><span class="p">(</span><span class="n">gridsize</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">colspan</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">rowspan</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">ax_0</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span><span class="p">(</span><span class="n">gridsize</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">colspan</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rowspan</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># top-right</span>
-    <span class="n">ax_1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span><span class="p">(</span><span class="n">gridsize</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">colspan</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rowspan</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># bottom-right</span>
-    <span class="n">ax_2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span><span class="p">(</span><span class="n">gridsize</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">colspan</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rowspan</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># top-left</span>
-    <span class="n">ax_3</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span><span class="p">(</span><span class="n">gridsize</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">colspan</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rowspan</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># bottom-left</span>
-
-    <span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="n">ax_global</span><span class="p">,</span> <span class="n">ax_0</span><span class="p">,</span> <span class="n">ax_1</span><span class="p">,</span> <span class="n">ax_2</span><span class="p">,</span> <span class="n">ax_3</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">axes</span><span class="p">):</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">x_lim</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">y_lim</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;x [mm]&quot;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;z [mm]&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">pad</span><span class="o">=-</span><span class="mi">20</span><span class="p">)</span>
-        <span class="c1"># plot the 4 chambers in each &#39;Axes&#39;</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
-            <span class="n">chamber</span> <span class="o">=</span> <span class="n">chamber_position</span><span class="p">[</span><span class="n">chamber_position</span><span class="p">[</span><span class="s2">&quot;chamber&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">j</span><span class="p">]</span>
-            <span class="n">ax</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">chamber</span><span class="p">[</span><span class="s2">&quot;x_vertices&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">chamber</span><span class="p">[</span><span class="s2">&quot;y_vertices&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">axes</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Select_Events_Calibration"><code>Select_Events_Calibration</code><a class="anchor-link" href="#Select_Events_Calibration">&#182;</a></h2><ul>
-<li><strong>Input</strong><ul>
-<li><code>Pandas Dataframe</code> (single event)</li>
-<li>number of hits in the event</li>
-</ul>
-</li>
-<li><strong>Output</strong> <ul>
-<li>boolean which is <code>True</code> if the event passes the selection, <code>False</code> otherwise</li>
-<li>list of integers with the number of chambers where the hits are found</li>
-<li>list of integers containing the number of different layers hit per chamber</li>
-</ul>
-</li>
-</ul>
-<p>This function is used to select what we define to be <em>good events</em> at the calibration stage, meaning an event which has a number of hits between 6 and 12 (extremes are included). Events with less than 6 hits are deemed non significant, those with more than 12 are supposed to contain a large amount of noise.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Select_Events_Calibration</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">hits_number</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Selects good Events (Calibration)</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    dataframe : pandas.dataframe</span>
-<span class="sd">        Pandas Dataframe with all the information about the Event;</span>
-<span class="sd">        each row is a single hit recorded in the event</span>
-<span class="sd">    hits_number : int</span>
-<span class="sd">        number of hits in the Event</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    select : bool</span>
-<span class="sd">        True if the event pass the selection, False otherwise</span>
-<span class="sd">    chambers : list(int)</span>
-<span class="sd">        list with the number of the chambers where we find the hits</span>
-<span class="sd">    n_layer : list(int)</span>
-<span class="sd">        list with the number of different layers hit per chamber</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="c1"># hits only in the right side</span>
-    <span class="c1"># if we have less than 6 hits or more than 12</span>
-    <span class="c1"># mark the event as &#39;bad&#39;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">hits_number</span> <span class="o">&lt;</span> <span class="mi">6</span> <span class="ow">or</span> <span class="n">hits_number</span> <span class="o">&gt;</span> <span class="mi">12</span><span class="p">):</span>
-            <span class="n">select</span><span class="o">=</span><span class="kc">False</span>
-            <span class="n">chambers</span><span class="o">=</span><span class="p">[]</span>
-            <span class="n">n_layer</span><span class="o">=</span><span class="p">[]</span>
-
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1">#hits only in the right side</span>
-        <span class="k">if</span><span class="p">((</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;Chamber&#39;</span><span class="p">]</span><span class="o">&lt;=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()):</span>
-            <span class="n">chambers</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
-            <span class="c1">#compute number of different layers in each chamber</span>
-            <span class="n">n_layer_ch0</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;Chamber&#39;</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
-            <span class="n">n_layer_ch1</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;Chamber&#39;</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
-
-            <span class="n">n_layer</span><span class="o">=</span><span class="p">[</span><span class="n">n_layer_ch0</span><span class="p">,</span> <span class="n">n_layer_ch1</span><span class="p">]</span>
-
-            <span class="c1">#require at least 3 different layers for each chamber</span>
-            <span class="k">if</span><span class="p">(</span><span class="n">n_layer_ch0</span><span class="o">&gt;=</span><span class="mi">3</span> <span class="ow">and</span> <span class="n">n_layer_ch1</span><span class="o">&gt;=</span><span class="mi">3</span><span class="p">):</span>
-                <span class="n">select</span><span class="o">=</span><span class="kc">True</span>
-                <span class="k">return</span> <span class="n">select</span><span class="p">,</span> <span class="n">chambers</span><span class="p">,</span> <span class="n">n_layer</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">select</span><span class="o">=</span><span class="kc">False</span>
-                <span class="k">return</span> <span class="n">select</span><span class="p">,</span> <span class="n">chambers</span><span class="p">,</span> <span class="n">n_layer</span>
-
-        <span class="c1">#hits only in the left side</span>
-        <span class="k">elif</span><span class="p">((</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;Chamber&#39;</span><span class="p">]</span><span class="o">&gt;=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()):</span>
-            <span class="n">chambers</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span>
-            <span class="c1">#compute number of different layers in each chamber</span>
-            <span class="n">n_layer_ch2</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;Chamber&#39;</span><span class="p">]</span><span class="o">==</span><span class="mi">2</span><span class="p">][</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
-            <span class="n">n_layer_ch3</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;Chamber&#39;</span><span class="p">]</span><span class="o">==</span><span class="mi">3</span><span class="p">][</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
-
-            <span class="n">n_layer</span><span class="o">=</span><span class="p">[</span><span class="n">n_layer_ch2</span><span class="p">,</span> <span class="n">n_layer_ch3</span><span class="p">]</span>
-
-            <span class="c1">#require at least 3 different layers for each chamber</span>
-            <span class="k">if</span><span class="p">(</span><span class="n">n_layer_ch2</span><span class="o">&gt;=</span><span class="mi">3</span> <span class="ow">and</span> <span class="n">n_layer_ch3</span><span class="o">&gt;=</span><span class="mi">3</span><span class="p">):</span>
-                <span class="n">select</span><span class="o">=</span><span class="kc">True</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">select</span><span class="o">=</span><span class="kc">False</span>
-
-        <span class="c1">#hits in both left and right side</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">select</span><span class="o">=</span><span class="kc">False</span>
-            <span class="n">chambers</span><span class="o">=</span><span class="p">[]</span>
-            <span class="n">n_layer</span><span class="o">=</span><span class="p">[]</span>
-
-        <span class="k">return</span> <span class="n">select</span><span class="p">,</span> <span class="n">chambers</span><span class="p">,</span> <span class="n">n_layer</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Points_Filter"><code>Points_Filter</code><a class="anchor-link" href="#Points_Filter">&#182;</a></h3><ul>
-<li><strong>Input</strong><ul>
-<li><code>Pandas Dataframe</code> (single event)</li>
-</ul>
-</li>
-<li><strong>Output</strong> <ul>
-<li><code>Pandas Dataframe</code> with filtered points on the right of the detector</li>
-<li><code>Pandas Dataframe</code> with filtered points on the left of the detector</li>
-<li>number of hits on the right </li>
-<li>number of hits on the left </li>
-</ul>
-</li>
-</ul>
-<p>This function is used to divide a <code>Pandas Dataframe</code> representing a full event in 2 <em>left</em> and <em>right</em> datasets, depending on the side of the detector the hits took place in. A further filter is imposed so as to only select hits taking place in regions of interest selected according to pre-analyses.
-<br>
-Two dataframes are hence given in output, together with the number of hits respectively contained there.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Points_Filter</span><span class="p">(</span><span class="n">dataframe</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Filters hits in an event according to left and right</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    dataframe : pandas.dataframe</span>
-<span class="sd">        Pandas Dataframe with all the information about the Event    </span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    df_left_filtered : pandas.dataframe</span>
-<span class="sd">        Pandas Dataframe with all the information about the hits on the left</span>
-<span class="sd">    df_right_filtered : pandas.dataframe</span>
-<span class="sd">        Pandas Dataframe with all the information about the hits on the right</span>
-<span class="sd">    number_hits_left : int</span>
-<span class="sd">        number of hits in the event on the left</span>
-<span class="sd">    number_hits_right : int</span>
-<span class="sd">        number of hits in the event on the right</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="c1"># left detector part (chamber 2,3)</span>
-    <span class="n">df_left</span>  <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Chamber&quot;</span><span class="p">]</span><span class="o">&gt;=</span><span class="mi">2</span><span class="p">]</span>
-    <span class="n">df_left_filtered</span> <span class="o">=</span> <span class="n">df_left</span><span class="p">[</span><span class="n">df_left</span><span class="p">[</span><span class="s1">&#39;XL_local&#39;</span><span class="p">]</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">df_left_filtered</span> <span class="o">=</span> <span class="n">df_left_filtered</span><span class="p">[</span><span class="n">df_left_filtered</span><span class="p">[</span><span class="s1">&#39;XL_local&#39;</span><span class="p">]</span><span class="o">&lt;=</span><span class="mi">200</span><span class="p">]</span>
-    <span class="n">number_hits_left</span>  <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_left_filtered</span><span class="p">)</span>
-
-    <span class="c1"># right detector part (chamber 0,1)</span>
-    <span class="n">df_right</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Chamber&quot;</span><span class="p">]</span><span class="o">&lt;=</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">df_right_filtered</span> <span class="o">=</span> <span class="n">df_right</span><span class="p">[</span><span class="n">df_right</span><span class="p">[</span><span class="s1">&#39;XL_local&#39;</span><span class="p">]</span><span class="o">&gt;=</span><span class="mi">540</span><span class="p">]</span>
-    <span class="n">df_right_filtered</span> <span class="o">=</span> <span class="n">df_right_filtered</span><span class="p">[</span><span class="n">df_right_filtered</span><span class="p">[</span><span class="s1">&#39;XL_local&#39;</span><span class="p">]</span><span class="o">&lt;=</span><span class="mi">720</span><span class="p">]</span>
-    <span class="n">number_hits_right</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_right_filtered</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">df_left_filtered</span><span class="p">,</span> <span class="n">df_right_filtered</span><span class="p">,</span> <span class="n">number_hits_left</span><span class="p">,</span><span class="n">number_hits_right</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Plot_Events"><code>Plot_Events</code><a class="anchor-link" href="#Plot_Events">&#182;</a></h3><ul>
-<li><strong>Input</strong><ul>
-<li><code>Pandas Dataframe</code> (single event)</li>
-<li>integer representing the numbering of the Event in the Run</li>
-</ul>
-</li>
-<li><strong>Output</strong> <ul>
-<li>list of <code>pyplot Axes</code> </li>
-</ul>
-</li>
-</ul>
-<p>The input of the function is the <code>Pandas Dataframe</code> made by the <code>Read_Data</code> function, and the event number (this is due to the fact that, if the are no hits, the <code>Dataframe</code> is empty, and therefore we can't get the Event number from that). Five plots are given as output: one image of the whole detector, and one for each of the 4 chambers. In the images there will be the points of the hits tracked in the event (left/right positions have different colors).</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Plot_Events</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">evNumber</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Plots the positions of the hits</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    dataframe : pandas.dataframe</span>
-<span class="sd">        Pandas Dataframe with all the information about the Event;</span>
-<span class="sd">        each row is a single hit recorded in the event</span>
-<span class="sd">    event_number : int</span>
-<span class="sd">        number of the Event in the run</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    event_display : list(pyplot.axes)</span>
-<span class="sd">        images of the hits of the events</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="c1"># get the EvNumber as argument, because, if the dataframe is empty,</span>
-    <span class="c1"># I can&#39;t get it from data</span>
-    <span class="n">plots</span> <span class="o">=</span> <span class="n">Plot_Background</span><span class="p">()</span>
-    <span class="n">plots</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Event:&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">evNumber</span><span class="p">),</span> <span class="p">{</span><span class="s1">&#39;size&#39;</span><span class="p">:</span><span class="s1">&#39;18&#39;</span><span class="p">})</span>
-    <span class="k">if</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">empty</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
-        <span class="n">xL</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;XL_global&quot;</span><span class="p">]</span>
-        <span class="n">xR</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;XR_global&quot;</span><span class="p">]</span>
-        <span class="n">z</span>  <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s2">&quot;Z_global&quot;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>
-            <span class="n">image</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xL</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="s2">&quot;bo&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-            <span class="n">image</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xR</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="s2">&quot;ro&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">plots</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Local_Fit"><code>Local_Fit</code><a class="anchor-link" href="#Local_Fit">&#182;</a></h3><ul>
-<li><strong>Input</strong> <ul>
-<li><code>Pandas Dataframe</code> (with info on left OR right part of the detectors, so 2 chambers)</li>
-<li>list with involved chambers numbers ([0,1] or [2,3])</li>
-<li>list with number of different layers hit per chamber</li>
-<li>a boolean to establish whether a layer in each chamber should be excluded at random; if <code>False</code>, no exclusion takes place</li>
-</ul>
-</li>
-<li><strong>Output</strong> <ul>
-<li>list of 2 dictionaries, one for each chamber, containing the local fit results with the following pieces of information: slope, intercept, optimal combination of points, excluded layer</li>
-</ul>
-</li>
-</ul>
-<p>This function performs a local fit for each pair of chambers, either on the left or on the right side of the detector; the fit is only made for good events and only for the Calibration stage of the analysis. We allow the possibility to exclude layers via a boolean switch, provided this happenns in such a way that we have at least 6 hit layers at any event.
-<br>
-The best combination of points is chosen to be the one with the lowest $\chi^2$, among all the possible combinations with one excluded layer.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Local_Fit</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">list_chambers</span><span class="p">,</span> <span class="n">list_layers</span><span class="p">,</span> <span class="n">exclusion_layer</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39; Local fit for each pair of chambers (left or right side); best combination </span>
-<span class="sd">    of points is the one with the lowest chi^2</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    dataframe : pandas.dataframe</span>
-<span class="sd">        Pandas Dataframe with the information of the left (right) part of the detector (2 chambers)</span>
-<span class="sd">    list_chambers : list(int)</span>
-<span class="sd">        list with the number of the 2 chambers involved</span>
-<span class="sd">    list_layers : list(int)</span>
-<span class="sd">        list with the number of different layers hit per chamber</span>
-<span class="sd">    exclusion_layer : bool</span>
-<span class="sd">        wether to exclude or not the 4th layer at random when fitting (if present); </span>
-<span class="sd">        if False, the excluded layer is set to 0, otherwise it is in [1,4]</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    results : list(dict)</span>
-<span class="sd">        list of 2 dictionaries, one for each chamber; each dictionary has the following information: </span>
-<span class="sd">        slope, intercept, optimal combination of points for the fit, excluded layer</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    
-    <span class="c1">#list to store results for each chamber</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="c1">#loop over the (two) chambers</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">list_chambers</span><span class="p">)):</span>
-       <span class="c1">#if we have 4 different layers we randomly select a layer to be excluded</span>
-       <span class="c1">#we will use the point from the excluded layer to check the goodness of the global fit</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">list_layers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">4</span> <span class="ow">and</span> <span class="n">exclusion_layer</span><span class="o">==</span><span class="kc">True</span><span class="p">):</span>
-            <span class="n">rand_layer</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">rand_layer</span><span class="o">=</span><span class="mi">0</span> <span class="c1">#layers are 1,2,3,4: excluding layer 0 is equivalent to keeping them all</span>
-
-        <span class="c1">#create dataframe_cl filtered by chamber and excluded layer</span>
-        <span class="n">dataframe_c</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;Chamber&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">list_chambers</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="c1">#dataframe filtered by chamber</span>
-        <span class="n">dataframe_cl</span> <span class="o">=</span> <span class="n">dataframe_c</span><span class="p">[</span><span class="n">dataframe_c</span><span class="p">[</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">!=</span><span class="n">rand_layer</span><span class="p">]</span>    <span class="c1">#filtered by chamber and excluded layer</span>
-
-        <span class="c1"># Z local coordinates corresponding to the 4 different layers</span>
-        <span class="n">Z</span><span class="o">=</span><span class="p">[</span><span class="mf">6.5</span><span class="p">,</span> <span class="mf">19.5</span><span class="p">,</span> <span class="mf">32.5</span><span class="p">,</span> <span class="mf">45.5</span><span class="p">]</span>
-
-        <span class="c1">#create a list l containing lists of points (z,x), one for each selected layer</span>
-        <span class="n">l</span><span class="o">=</span><span class="p">[]</span>
-
-        <span class="c1">#loop over selected layers and fill l</span>
-        <span class="k">for</span> <span class="n">layer_index</span> <span class="ow">in</span> <span class="n">dataframe_cl</span><span class="p">[</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
-            <span class="n">XR</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dataframe_cl</span><span class="p">[</span><span class="n">dataframe_cl</span><span class="p">[</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">layer_index</span><span class="p">][</span><span class="s1">&#39;XR_local&#39;</span><span class="p">])</span>
-            <span class="n">XL</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dataframe_cl</span><span class="p">[</span><span class="n">dataframe_cl</span><span class="p">[</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">layer_index</span><span class="p">][</span><span class="s1">&#39;XL_local&#39;</span><span class="p">])</span>
-
-            <span class="n">z</span><span class="o">=</span><span class="n">Z</span><span class="p">[(</span><span class="n">layer_index</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="c1">#layer_index is in range [1,4], list index must be in range [0,3]</span>
-            <span class="n">l_temp</span><span class="o">=</span><span class="p">[]</span>
-
-            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">XR</span><span class="p">:</span>
-                <span class="n">l_temp</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">z</span><span class="p">,</span><span class="n">x</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">XL</span><span class="p">:</span>
-                <span class="n">l_temp</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">z</span><span class="p">,</span><span class="n">x</span><span class="p">))</span>
-            <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l_temp</span><span class="p">)</span>
-
-        <span class="c1">#create numpy array with all possible combinations of 3 (4) points p1,p2,p3(,p4)</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">list_layers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">3</span> <span class="ow">or</span> <span class="n">exclusion_layer</span><span class="o">==</span><span class="mi">1</span><span class="p">):</span>
-            <span class="n">combinations</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">,</span><span class="n">p3</span><span class="p">)</span> <span class="k">for</span> <span class="n">p1</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p2</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">p3</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
-        <span class="k">elif</span><span class="p">(</span><span class="n">list_layers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">4</span> <span class="ow">and</span> <span class="n">exclusion_layer</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span>
-            <span class="n">combinations</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">,</span><span class="n">p3</span><span class="p">,</span><span class="n">p4</span><span class="p">)</span> <span class="k">for</span> <span class="n">p1</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p2</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">p3</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">p4</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR, Unexpected number of layers&quot;</span><span class="p">)</span>
-            <span class="k">break</span>
-
-
-        <span class="c1">#interpolate each combination and select the combination with least chi squared</span>
-        <span class="n">min_chisq</span><span class="o">=</span><span class="mi">100000</span> <span class="c1">#to store minimum chisq</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">list_layers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">3</span> <span class="ow">or</span> <span class="n">exclusion_layer</span><span class="o">==</span><span class="mi">1</span><span class="p">):</span>
-            <span class="n">optimal_comb</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span> <span class="c1">#to store best combination of points</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">list_layers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="mi">4</span> <span class="ow">and</span> <span class="n">exclusion_layer</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span>
-            <span class="n">optimal_comb</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span> <span class="c1">#to store best combination of points</span>
-        <span class="n">slope_opt</span><span class="o">=</span><span class="mi">0</span> <span class="c1">#to store slope obtained with the best combination</span>
-        <span class="n">intercept_opt</span><span class="o">=</span><span class="mi">0</span> <span class="c1">#to store intercept obtained with the best combination</span>
-        <span class="k">for</span> <span class="n">points</span> <span class="ow">in</span> <span class="n">combinations</span><span class="p">:</span>
-            <span class="c1">#linear regression</span>
-            <span class="n">slope</span><span class="p">,</span> <span class="n">intercept</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">linregress</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
-            <span class="c1">#compute expected x using the interpolating function</span>
-            <span class="n">expect_x</span><span class="o">=</span><span class="n">intercept</span><span class="o">+</span><span class="n">slope</span><span class="o">*</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
-            <span class="c1">#compute chi squared</span>
-            <span class="n">chisq</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">chisquare</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">expect_x</span><span class="p">)</span>
-            <span class="c1">#eventually update min_chisq and optimal_comb</span>
-            <span class="k">if</span><span class="p">(</span><span class="n">chisq</span><span class="o">&lt;</span><span class="n">min_chisq</span><span class="p">):</span>
-                <span class="n">min_chisq</span> <span class="o">=</span> <span class="n">chisq</span>
-                <span class="n">optimal_comb</span> <span class="o">=</span> <span class="n">points</span>
-                <span class="n">slope_opt</span> <span class="o">=</span> <span class="n">slope</span>
-                <span class="n">intercept_opt</span> <span class="o">=</span> <span class="n">intercept</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">continue</span>
-
-        <span class="c1">#add to results: results is a list of 2 dictionaries, one for each chamber</span>
-        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;slope&quot;</span><span class="p">:</span><span class="n">slope_opt</span><span class="p">,</span>
-                        <span class="s2">&quot;intercept&quot;</span><span class="p">:</span><span class="n">intercept_opt</span><span class="p">,</span>
-                        <span class="s2">&quot;optimal_comb&quot;</span><span class="p">:</span> <span class="n">optimal_comb</span><span class="p">,</span>
-                        <span class="s2">&quot;excl_layer&quot;</span><span class="p">:</span> <span class="n">rand_layer</span><span class="p">})</span>
-
-    <span class="k">return</span> <span class="n">results</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Global_Fit_Calibration"><code>Global_Fit_Calibration</code><a class="anchor-link" href="#Global_Fit_Calibration">&#182;</a></h3><ul>
-<li><strong>Input</strong><ul>
-<li><code>Pandas Dataframe</code> (with info on left OR right part of the detectors, so 2 chambers)</li>
-<li>list with involved chambers numbers ([0,1] or [2,3]) </li>
-<li>list of dictionaries obtained as output from the <code>Local_Fit</code> function</li>
-</ul>
-</li>
-<li><strong>Output</strong> <ul>
-<li>dictionary containing fit results: slope, intercept, residuals (of the excluded layer, if present)</li>
-</ul>
-</li>
-</ul>
-<p>This function performs the global fit for either the left or the right side of the detector. This particular fit exploits the results of <code>Local_Fit</code>, as it is only performed on the points selected by that function. Clearly, in this case the two chambers are considered together as their fit is unique for both.
-<br>
-This function is for Calibration only.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Global_Fit_Calibration</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">list_chambers</span><span class="p">,</span> <span class="n">lfit_results</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39; Global fit for left (right) side using the points selected by Local_Fit</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    dataframe : pandas.dataframe</span>
-<span class="sd">        Pandas Dataframe with the information of the left (right) part of the detector (2 chambers)</span>
-<span class="sd">    list_chambers : list(int)</span>
-<span class="sd">        list with the number of the 2 chambers involved</span>
-<span class="sd">    lfit_results : list(dict)</span>
-<span class="sd">        list of 2 dictionaries, one for each chamber; each dictionary has the following information: </span>
-<span class="sd">        slope, intercept, optimal combination of points for the fit, excluded layer. </span>
-<span class="sd">        This is the results from Local_Fit</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    g_results : dict</span>
-<span class="sd">        dictionary with the following information: slope, intercept, residuals; </span>
-<span class="sd">        residuals are the ones of the excluded layer, if present</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="c1">#TRANSFORM LOCAL COORDINATES IN GLOBAL COORDINATES</span>
-
-    <span class="c1">#First chamber:</span>
-    <span class="n">global_z_ch1</span> <span class="o">=</span> <span class="n">global_z_shifts</span><span class="p">[</span><span class="n">list_chambers</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">+</span><span class="n">lfit_results</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;optimal_comb&quot;</span><span class="p">][:,</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">global_x_ch1</span> <span class="o">=</span> <span class="n">global_x_shifts</span><span class="p">[</span><span class="n">list_chambers</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">-</span><span class="n">lfit_results</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;optimal_comb&quot;</span><span class="p">][:,</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">global_ch1</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">global_z_ch1</span><span class="p">,</span> <span class="n">global_x_ch1</span><span class="p">))</span>
-
-    <span class="c1">#Second chamber:</span>
-    <span class="n">global_z_ch2</span> <span class="o">=</span> <span class="n">global_z_shifts</span><span class="p">[</span><span class="n">list_chambers</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">+</span><span class="n">lfit_results</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;optimal_comb&quot;</span><span class="p">][:,</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">global_x_ch2</span> <span class="o">=</span> <span class="n">global_x_shifts</span><span class="p">[</span><span class="n">list_chambers</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">-</span><span class="n">lfit_results</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;optimal_comb&quot;</span><span class="p">][:,</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">global_ch2</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">global_z_ch2</span><span class="p">,</span> <span class="n">global_x_ch2</span><span class="p">))</span>
-
-    <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">global_ch1</span><span class="p">,</span> <span class="n">global_ch2</span><span class="p">))</span>
-
-    <span class="c1">#LINEAR REGRESSION</span>
-    <span class="n">slope</span><span class="p">,</span> <span class="n">intercept</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">linregress</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
-
-    <span class="c1">#compute expected x using the interpolating function</span>
-    <span class="n">expect_x</span> <span class="o">=</span> <span class="n">intercept</span><span class="o">+</span><span class="n">slope</span><span class="o">*</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
-
-    <span class="c1">#COMPUTE RESIDUALS USING TEST LAYER (layer excluded in local fit function)</span>
-    <span class="c1"># Z local coordinates corresponding to the 4 different layers</span>
-    <span class="n">Z_local</span> <span class="o">=</span> <span class="p">[</span><span class="mf">6.5</span><span class="p">,</span><span class="mf">19.5</span><span class="p">,</span> <span class="mf">32.5</span><span class="p">,</span> <span class="mf">45.5</span><span class="p">]</span>
-    <span class="c1">#list to store residuals</span>
-    <span class="n">res</span><span class="o">=</span><span class="p">[]</span>
-    <span class="c1">#compute residuals for each chamber</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">list_chambers</span><span class="p">)):</span>
-        <span class="n">dataframe_c</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;Chamber&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">list_chambers</span><span class="p">[</span><span class="n">c</span><span class="p">]]</span> <span class="c1">#dataframe filtered by chamber</span>
-        <span class="n">res_temp</span><span class="o">=</span><span class="p">[]</span>
-        <span class="n">excl_layer</span><span class="o">=</span><span class="n">lfit_results</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="s2">&quot;excl_layer&quot;</span><span class="p">]</span>
-        <span class="c1">#test layer Z global coordinate</span>
-        <span class="n">Z_test_layer</span><span class="o">=</span><span class="n">global_z_shifts</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">+</span><span class="n">Z_local</span><span class="p">[(</span><span class="n">excl_layer</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
-        <span class="c1">#if there were only 3 layers, excl_layer was set to 0:</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">excl_layer</span><span class="o">!=</span><span class="mi">0</span><span class="p">):</span>
-            <span class="n">expect_x</span><span class="o">=</span><span class="n">intercept</span><span class="o">+</span><span class="n">slope</span><span class="o">*</span><span class="p">(</span><span class="n">Z_test_layer</span><span class="p">)</span>
-            <span class="n">XR</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dataframe_c</span><span class="p">[</span><span class="n">dataframe_c</span><span class="p">[</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">excl_layer</span><span class="p">][</span><span class="s1">&#39;XR_global&#39;</span><span class="p">])</span>
-            <span class="n">XL</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dataframe_c</span><span class="p">[</span><span class="n">dataframe_c</span><span class="p">[</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">excl_layer</span><span class="p">][</span><span class="s1">&#39;XL_global&#39;</span><span class="p">])</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">XR</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-                <span class="n">res_temp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">XR</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">expect_x</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">XL</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-                <span class="n">res_temp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">XL</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">expect_x</span><span class="p">)</span>
-
-            <span class="n">res_temp</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">fabs</span><span class="p">)</span> <span class="c1">#we want the smallest residual in absolute value</span>
-            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res_temp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">res</span><span class="o">=</span><span class="p">[]</span>
-    <span class="c1">#convert list res in numpy array</span>
-    <span class="n">res</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
-
-    <span class="n">g_results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;slope&quot;</span><span class="p">:</span> <span class="n">slope</span><span class="p">,</span> <span class="s2">&quot;intercept&quot;</span><span class="p">:</span> <span class="n">intercept</span><span class="p">,</span> <span class="s2">&quot;residuals&quot;</span><span class="p">:</span> <span class="n">res</span><span class="p">}</span>
-
-    <span class="k">return</span> <span class="n">g_results</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Global_Fit_Physics"><code>Global_Fit_Physics</code><a class="anchor-link" href="#Global_Fit_Physics">&#182;</a></h3><ul>
-<li><strong>Input</strong><ul>
-<li><code>Pandas Dataframe</code> (with info on left OR right part of the detectors, so 2 chambers)</li>
-<li>list with involved chambers numbers ([0,1] or [2,3]) </li>
-<li>list with the number of different layers per chamber which have been hit</li>
-</ul>
-</li>
-<li><strong>Output</strong> <ul>
-<li>dictionary with slope, intercept and optimal combination of points for the fit</li>
-</ul>
-</li>
-</ul>
-<p>This function performs the global fit on either the left or right side of the detector. It does so by considering the best conbination of points (hence, the one with the lowest $\chi^2$) obtained from the hits registered in each layer. Granted that the event has been accepted, we can have 6, 7 or 8 layers which registered hits.
-<br>
-This function is for Physics only.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Global_Fit_Physics</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">list_chambers</span><span class="p">,</span> <span class="n">list_layers</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39; Global fit for left (right) side using all the points recorded; best combination of points </span>
-<span class="sd">    is the one with the lowest chi^2</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    dataframe : pandas.dataframe</span>
-<span class="sd">        Pandas Dataframe with the information of the left (right) part of the detector (2 chambers)</span>
-<span class="sd">    list_chambers : list(int)</span>
-<span class="sd">        list with the number of the 2 chambers involved</span>
-<span class="sd">    list_layers : list(int)</span>
-<span class="sd">        list with the number of different layers hit per chamber</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    g_results : dict</span>
-<span class="sd">        dictionary with the following information: slope, intercept, optimal combination of points for the fit</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="c1">#list to store results for each chamber</span>
-    <span class="n">g_results</span><span class="o">=</span><span class="p">[]</span>
-    <span class="c1">#create a list l containing lists of points (z,x), one for each selected layer</span>
-    <span class="n">l</span><span class="o">=</span><span class="p">[]</span>
-    <span class="c1">#loop over the (two) chambers</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">list_chambers</span><span class="p">)):</span>
-        <span class="c1">#create dataframe_cl filtered by chamber and excluded layer</span>
-        <span class="n">dataframe_cl</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;Chamber&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">list_chambers</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="c1">#dataframe filtered by chamber</span>
-
-        <span class="c1"># Z local coordinates corresponding to the 4 different layers</span>
-        <span class="n">Z</span><span class="o">=</span><span class="p">[</span><span class="mf">6.5</span><span class="p">,</span> <span class="mf">19.5</span><span class="p">,</span> <span class="mf">32.5</span><span class="p">,</span> <span class="mf">45.5</span><span class="p">]</span>
-        <span class="n">global_z_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">823.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">823.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-
-        <span class="c1">#loop over selected layers and fill l</span>
-        <span class="k">for</span> <span class="n">layer_index</span> <span class="ow">in</span> <span class="n">dataframe_cl</span><span class="p">[</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
-            <span class="n">XR</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dataframe_cl</span><span class="p">[</span><span class="n">dataframe_cl</span><span class="p">[</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">layer_index</span><span class="p">][</span><span class="s1">&#39;XR_global&#39;</span><span class="p">])</span>
-            <span class="n">XL</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dataframe_cl</span><span class="p">[</span><span class="n">dataframe_cl</span><span class="p">[</span><span class="s1">&#39;Layer&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">layer_index</span><span class="p">][</span><span class="s1">&#39;XL_global&#39;</span><span class="p">])</span>
-
-            <span class="n">z</span><span class="o">=</span> <span class="n">global_z_shifts</span><span class="p">[</span><span class="n">list_chambers</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">+</span><span class="n">Z</span><span class="p">[(</span><span class="n">layer_index</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="c1">#layer_index is in range [1,4], list index must be in range [0,3]</span>
-            <span class="n">l_temp</span><span class="o">=</span><span class="p">[]</span>
-
-            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">XR</span><span class="p">:</span>
-                <span class="n">l_temp</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">z</span><span class="p">,</span><span class="n">x</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">XL</span><span class="p">:</span>
-                <span class="n">l_temp</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">z</span><span class="p">,</span><span class="n">x</span><span class="p">))</span>
-            <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l_temp</span><span class="p">)</span>
-
-    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">))</span>
-    <span class="c1">#create numpy array with all possible combinations of 3 (4) points p1,p2,p3(,p4)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">list_layers</span><span class="p">)</span>
-    <span class="n">total_layers</span><span class="o">=</span><span class="n">list_layers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">list_layers</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">total_layers</span><span class="o">==</span><span class="mi">6</span><span class="p">):</span>
-        <span class="n">combinations</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">,</span><span class="n">p3</span><span class="p">,</span><span class="n">p4</span><span class="p">,</span><span class="n">p5</span><span class="p">,</span><span class="n">p6</span><span class="p">)</span> <span class="k">for</span> <span class="n">p1</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p2</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">p3</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">p4</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">p5</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">p6</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">5</span><span class="p">]])</span>
-    <span class="k">elif</span><span class="p">(</span><span class="n">total_layers</span><span class="o">==</span><span class="mi">7</span><span class="p">):</span>
-        <span class="n">combinations</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">,</span><span class="n">p3</span><span class="p">,</span><span class="n">p4</span><span class="p">,</span><span class="n">p5</span><span class="p">,</span><span class="n">p6</span><span class="p">,</span><span class="n">p7</span><span class="p">)</span> <span class="k">for</span> <span class="n">p1</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p2</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">p3</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">p4</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">p5</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">p6</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="k">for</span> <span class="n">p7</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">6</span><span class="p">]])</span>
-    <span class="k">elif</span><span class="p">(</span><span class="n">total_layers</span><span class="o">==</span><span class="mi">8</span><span class="p">):</span>
-        <span class="n">combinations</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">,</span><span class="n">p3</span><span class="p">,</span><span class="n">p4</span><span class="p">,</span><span class="n">p5</span><span class="p">,</span><span class="n">p6</span><span class="p">,</span><span class="n">p7</span><span class="p">,</span><span class="n">p8</span><span class="p">)</span> <span class="k">for</span> <span class="n">p1</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p2</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">p3</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">p4</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">p5</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">p6</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="k">for</span> <span class="n">p7</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="k">for</span> <span class="n">p8</span> <span class="ow">in</span> <span class="n">l</span><span class="p">[</span><span class="mi">7</span><span class="p">]])</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ERROR, Unexpected number of layers&quot;</span><span class="p">)</span>
-        <span class="n">g_results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;slope&quot;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
-                     <span class="s2">&quot;intercept&quot;</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
-                     <span class="s2">&quot;optimal_comb&quot;</span> <span class="p">:</span> <span class="p">[]}</span>
-        <span class="k">return</span> <span class="n">g_results</span>
-
-    <span class="c1">#interpolate each combination and select the combination with least chi squared</span>
-    <span class="n">min_chisq</span><span class="o">=</span><span class="mi">100000</span> <span class="c1">#to store minimum chisq</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">total_layers</span><span class="o">==</span><span class="mi">6</span><span class="p">):</span>
-        <span class="n">optimal_comb</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">6</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span> <span class="c1">#to store best combination of points with hit in 6 layer</span>
-    <span class="k">elif</span><span class="p">(</span><span class="n">total_layers</span><span class="o">==</span><span class="mi">7</span><span class="p">):</span>
-        <span class="n">optimal_comb</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span> <span class="c1">#to store best combination of points with hit in 7 layer</span>
-    <span class="k">elif</span><span class="p">(</span><span class="n">total_layers</span><span class="o">==</span><span class="mi">8</span><span class="p">):</span>
-        <span class="n">optimal_comb</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">8</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span> <span class="c1">#to store best combination of points with hit in 8 layer</span>
-
-    <span class="n">slope_opt</span><span class="o">=</span><span class="mi">0</span> <span class="c1">#to store slope obtained with the best combination</span>
-    <span class="n">intercept_opt</span><span class="o">=</span><span class="mi">0</span> <span class="c1">#to store intercept obtained with the best combination</span>
-    <span class="k">for</span> <span class="n">points</span> <span class="ow">in</span> <span class="n">combinations</span><span class="p">:</span>
-        <span class="c1">#linear regression</span>
-        <span class="n">slope</span><span class="p">,</span> <span class="n">intercept</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">linregress</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
-        <span class="c1">#compute expected x using the interpolating function</span>
-        <span class="n">expect_x</span> <span class="o">=</span> <span class="n">intercept</span><span class="o">+</span><span class="n">slope</span><span class="o">*</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
-        <span class="c1">#compute chi squared</span>
-        <span class="n">chisq</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">chisquare</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">expect_x</span><span class="p">)</span>
-        <span class="c1">#eventually update min_chisq and optimal_comb</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">fabs</span><span class="p">(</span><span class="n">chisq</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">min_chisq</span><span class="p">):</span>
-            <span class="n">min_chisq</span><span class="o">=</span><span class="n">fabs</span><span class="p">(</span><span class="n">chisq</span><span class="p">)</span>
-            <span class="n">optimal_comb</span><span class="o">=</span><span class="n">points</span>
-            <span class="n">slope_opt</span><span class="o">=</span><span class="n">slope</span>
-            <span class="n">intercept_opt</span><span class="o">=</span><span class="n">intercept</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">continue</span>
-
-    <span class="c1">#add to results</span>
-    <span class="n">g_results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;slope&quot;</span> <span class="p">:</span> <span class="n">slope_opt</span><span class="p">,</span>
-                 <span class="s2">&quot;intercept&quot;</span> <span class="p">:</span> <span class="n">intercept_opt</span><span class="p">,</span>
-                 <span class="s2">&quot;optimal_comb&quot;</span> <span class="p">:</span> <span class="n">optimal_comb</span><span class="p">}</span>
-
-    <span class="k">return</span> <span class="n">g_results</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Gaussian_Fit_Hist"><code>Gaussian_Fit_Hist</code><a class="anchor-link" href="#Gaussian_Fit_Hist">&#182;</a></h3><ul>
-<li><strong>Input</strong><ul>
-<li><code>pyplot Axis</code> </li>
-<li><code>Pandas Dataframe</code> (with info on left OR right part of the detectors, so 2 chambers)</li>
-<li>number of bins for the histogram</li>
-<li>range of the histogram</li>
-<li>formatting parameters</li>
-</ul>
-</li>
-<li><strong>Output</strong> <ul>
-<li>None</li>
-</ul>
-</li>
-</ul>
-<p>This function builds the histogram and performs a gaussian fit on it, computing parameters and their errors. Plotting with superimposing gaussian is also taken care of.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Gaussian_Fit_Hist</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">nbins</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hist_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Filters hits in an event according to left and right</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    ax : pyploy Axis</span>
-<span class="sd">        background images of the detector and the chambers</span>
-<span class="sd">    dataframe : pandas.dataframe</span>
-<span class="sd">        Pandas Dataframe with all the information about the Event</span>
-<span class="sd">    nbins : int</span>
-<span class="sd">        number of bins to divide the histogram into</span>
-<span class="sd">    hist_range : tuple</span>
-<span class="sd">        range in which to build the histogram</span>
-<span class="sd">    **kwargs : </span>
-<span class="sd">        graphical and formatting parameters</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    None</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="k">def</span> <span class="nf">Gaussian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">A</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">A</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
-
-    <span class="n">hist</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">nbins</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">hist_range</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="n">centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">bins</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">bins</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">/</span> <span class="mi">2</span>
-    <span class="c1">#area = sum(np.diff(bins)*hist)</span>
-    <span class="n">popt3</span><span class="p">,</span> <span class="n">pcov3</span> <span class="o">=</span> <span class="n">curve_fit</span><span class="p">(</span><span class="n">Gaussian</span><span class="p">,</span> <span class="n">xdata</span><span class="o">=</span><span class="n">centers</span><span class="p">,</span> <span class="n">ydata</span><span class="o">=</span><span class="n">hist</span><span class="p">)</span>
-    <span class="n">A</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">popt3</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
-    <span class="n">dA</span><span class="p">,</span> <span class="n">dmu</span><span class="p">,</span> <span class="n">dsigma</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pcov3</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">popt3</span><span class="o">.</span><span class="n">size</span><span class="p">)]</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">bins</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span><span class="n">bins</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">100</span><span class="p">)</span>
-
-    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Gaussian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;C1&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;-.&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;$f(x) = A\,e^{-(x-\mu)^2/2\sigma^2}$&#39;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">centers</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">ecolor</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">elinewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;ro&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=.</span><span class="mi">75</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">hist</span><span class="p">))</span>
-    <span class="n">textstr</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s1">&#39;$A$ = </span><span class="si">{0:0.2f}</span><span class="s1">$\pm$</span><span class="si">{1:0.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">dA</span><span class="p">),</span>
-                         <span class="s1">&#39;$\mu$ = </span><span class="si">{0:0.4f}</span><span class="s1">$\pm$</span><span class="si">{1:0.4f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">dmu</span><span class="p">),</span>
-                         <span class="s1">&#39;$\sigma$ = </span><span class="si">{0:0.4f}</span><span class="s1">$\pm$</span><span class="si">{1:0.4f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">dsigma</span><span class="p">)))</span>
-    <span class="n">props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s1">&#39;round&#39;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;wheat&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="n">textstr</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
-              <span class="n">verticalalignment</span><span class="o">=</span><span class="s1">&#39;top&#39;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="n">props</span><span class="p">)</span>
-    <span class="c1">#return A, mu, sigma, dA, dmu, dsigma, centers</span>
-    <span class="k">return</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Plot_Fit"><code>Plot_Fit</code><a class="anchor-link" href="#Plot_Fit">&#182;</a></h3><ul>
-<li><p><strong>Input</strong></p>
+<h3 id="Datasets">Datasets<a class="anchor-link" href="#Datasets">&#182;</a></h3><p>In your assigned VM (LCP-6, IP: 10.67.22.15) you find the relevant datasets on <code>\data</code>. There are two folders where data for the physics runs and the calibration runs are stored.</p>
+<h4 id="Calibration-runs">Calibration runs<a class="anchor-link" href="#Calibration-runs">&#182;</a></h4><p>In the following table the relevant parameters for the calibration runs are listed</p>
+<table>
+<thead><tr>
+<th>Run</th>
+<th style="text-align:center">Energy (GeV)</th>
+<th style="text-align:center">Magnet current (A)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>260</td>
+<td style="text-align:center">22</td>
+<td style="text-align:center">-580</td>
+</tr>
+<tr>
+<td>261</td>
+<td style="text-align:center">18</td>
+<td style="text-align:center">-850</td>
+</tr>
+<tr>
+<td>262</td>
+<td style="text-align:center">18</td>
+<td style="text-align:center">850</td>
+</tr>
+<tr>
+<td>263</td>
+<td style="text-align:center">22</td>
+<td style="text-align:center">580</td>
+</tr>
+</tbody>
+</table>
+<h4 id="Physics-runs">Physics runs<a class="anchor-link" href="#Physics-runs">&#182;</a></h4><p>All physics runs were taken in the same conditions. They could be merged to gather more statistics (be reminded that $\mu^+ - \mu^-$ are very rare)</p>
+<h4 id="Data-format">Data format<a class="anchor-link" href="#Data-format">&#182;</a></h4><p>The data files are organized as a series of events (rows) where each event consist of the coordinates of the hits recorded in that event (N.B.: as the number of hits for even is not fixed, the dataset cannot be seen as a unique big table with a defined number of "columns"). More specifically every raw consists of:</p>
 <ul>
-<li>dictionary containing all the information collected for an event: <ul>
-<li>number of the event</li>
-<li>its <code>Pandas Dataframe</code></li>
-<li>number of hits</li>
-<li>a bool stating if the event has been selected or not</li>
-<li>list of chambers</li>
-<li>list with hit layers for each chamber</li>
+<li>event number</li>
+<li>number of recorded hits (N)</li>
+<li>hit 1 coordinates</li>
+<li>...</li>
+<li>hit N coordinates</li>
 </ul>
-</li>
-<li>list of <code>pyplot Axes</code> </li>
-<li>bool variable to check whether the event is from Calibration (<code>True</code>) or Physics (<code>True</code>)</li>
-</ul>
-</li>
-<li><p><strong>Output</strong></p>
+<p>where N could be zero too and the hits coordinates are:</p>
 <ul>
-<li>list of <code>pyplot Axes</code></li>
+<li><em>chamber</em>, which of the four detector registered the hit (numbering is in the range $0-4$)</li>
+<li><em>layer</em>, which layer of that detector</li>
+<li><em>xleft</em>, the x position of the hit <strong>in the local detector coordinates</strong> assuming the track passed at the left of the wire</li>
+<li><em>xright</em>, the x position of the hit <strong>in the local detector coordinates</strong> assuming the track passed at the right of the wire</li>
+<li><em>time</em>, the drift time (redundant)</li>
 </ul>
-</li>
-</ul>
-<p>This function implements plotting for the fitting part of our analysis, clearly integrating the 
-If the event is from Physics, clearly only the global fit is performed.</p>
+<p>The local detector coordinates are defined with respect to one side (the left one) of the detector. All the detectors however were placed rotated by 180 degrees, i.e. the x axes of the local and global coordinates have different orientation.</p>
 
 </div>
 </div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Plot_Fit</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">calibration</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39; Plots of the fits performed according to the analysis stage</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    ev : dict</span>
-<span class="sd">        dictionary with information about the event; it contains: </span>
-<span class="sd">        Number, Dataframe, Hits, Accepted, Chambers, Layers</span>
-<span class="sd">    plots : list(pyplot.axes)</span>
-<span class="sd">        background images of the detector and the chambers</span>
-<span class="sd">    calibration : bool</span>
-<span class="sd">        whether the event is taken during a Calibration or a Physics run</span>
-<span class="sd">    </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    plots : list(pyplot.axes)</span>
-<span class="sd">        images of the fits performed for the given event</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    
-    <span class="c1"># obtaine object from event dictionary</span>
-    <span class="n">dataframe</span> <span class="o">=</span> <span class="n">ev</span><span class="p">[</span><span class="s2">&quot;Dataframe&quot;</span><span class="p">]</span>
-    <span class="n">evNumber</span>  <span class="o">=</span> <span class="n">ev</span><span class="p">[</span><span class="s2">&quot;Number&quot;</span><span class="p">]</span>
-    <span class="n">chambers</span>  <span class="o">=</span> <span class="n">ev</span><span class="p">[</span><span class="s2">&quot;Chambers&quot;</span><span class="p">]</span>
-    <span class="n">layers</span>    <span class="o">=</span> <span class="n">ev</span><span class="p">[</span><span class="s2">&quot;Layers&quot;</span><span class="p">]</span>
-
-    <span class="c1"># if the list of plots is empty, create it</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">plots</span><span class="p">:</span> <span class="n">plots</span> <span class="o">=</span> <span class="n">Plot_Events</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">evNumber</span><span class="p">)</span>
-
-    <span class="n">z_glob</span><span class="o">=</span><span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1001</span><span class="p">)]</span>
-    <span class="n">z_glob</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">z_glob</span><span class="p">)</span>
-
-    <span class="c1"># calibration: plot local fit and global fit (using local selected points)</span>
-    <span class="k">if</span> <span class="n">calibration</span><span class="p">:</span>
-        <span class="n">lf_results</span> <span class="o">=</span> <span class="n">Local_Fit</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">chambers</span><span class="p">,</span> <span class="n">layers</span><span class="p">,</span> <span class="n">exclusion_layer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chambers</span><span class="p">):</span>
-            <span class="c1">#slope</span>
-            <span class="n">slope_loc</span> <span class="o">=</span> <span class="o">-</span><span class="n">lf_results</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="s1">&#39;slope&#39;</span><span class="p">]</span> <span class="c1">#in global coordinates the local slope takes a minus sign</span>
-            <span class="c1">#intercept in global coordinates</span>
-            <span class="n">intercept_loc</span> <span class="o">=</span> <span class="n">global_x_shifts</span><span class="p">[</span><span class="n">ch</span><span class="p">]</span><span class="o">-</span><span class="n">lf_results</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="s1">&#39;intercept&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">slope_loc</span><span class="o">*</span><span class="n">global_z_shifts</span><span class="p">[</span><span class="n">ch</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>
-                <span class="n">image</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">slope_loc</span><span class="o">*</span><span class="n">z_glob</span><span class="o">+</span><span class="n">intercept_loc</span><span class="p">,</span><span class="n">z_glob</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
-        <span class="n">gf_results</span> <span class="o">=</span> <span class="p">[</span><span class="n">Global_Fit</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">chambers</span><span class="p">,</span> <span class="n">lf_results</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">gf</span> <span class="ow">in</span> <span class="n">gf_results</span><span class="p">:</span>
-            <span class="n">slope</span><span class="o">=</span><span class="n">gf</span><span class="p">[</span><span class="s1">&#39;slope&#39;</span><span class="p">]</span>
-            <span class="n">intercept</span><span class="o">=</span><span class="n">gf</span><span class="p">[</span><span class="s1">&#39;intercept&#39;</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>
-                <span class="n">image</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">slope</span><span class="o">*</span><span class="n">z_glob</span><span class="o">+</span><span class="n">intercept</span><span class="p">,</span> <span class="n">z_glob</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">gf_results</span> <span class="o">=</span> <span class="n">Global_Fit_Combinations</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">chambers</span><span class="p">,</span> <span class="n">layers</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">gf</span> <span class="ow">in</span> <span class="n">gf_results</span><span class="p">:</span>
-            <span class="n">slope</span> <span class="o">=</span> <span class="n">gf</span><span class="p">[</span><span class="s1">&#39;slope&#39;</span><span class="p">]</span>
-            <span class="n">intercept</span> <span class="o">=</span> <span class="n">gf</span><span class="p">[</span><span class="s1">&#39;intercept&#39;</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>
-                <span class="n">image</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">slope</span><span class="o">*</span><span class="n">z_glob</span><span class="o">+</span><span class="n">intercept</span><span class="p">,</span> <span class="n">z_glob</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">plots</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Make_Plot"><code>Make_Plot</code><a class="anchor-link" href="#Make_Plot">&#182;</a></h3><ul>
-<li><strong>Input</strong><ul>
-<li>dictionary containing all the information collected for an event (see $\rightarrow$<code>Plot_Fit</code>)</li>
-<li>bool variable to check whether the event is from Calibration (<code>True</code>) or Physics (<code>False</code>)</li>
-</ul>
-</li>
-<li><strong>Output</strong> <ul>
-<li>None</li>
-</ul>
-</li>
-</ul>
-<p>This function is an helper which collects the plotting functions <code>Plot_Events</code> and <code>Plot_Fit</code> (invoked only if the event is labeled as accepted). In this way, with a single call it is possible to obtain a full visualization for a single event, which includes hits and, if the event passes the selection imposed, local and global fits (for Calibration) or just global (for Physics).</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[13]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">Make_Plot</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">calibration</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Plots of the background and the hits</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    ev : dict</span>
-<span class="sd">        dictionary with information about the event; it contains: </span>
-<span class="sd">        Number, Dataframe, Hits, Accepted, Chambers, Layers</span>
-<span class="sd">    calibration : bool</span>
-<span class="sd">        whether the event is taken during Calibration or Physics run</span>
-<span class="sd">        </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    None</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-
-    <span class="c1">#gridsize = (5, 2)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">24</span><span class="p">))</span>
-    <span class="n">plots</span> <span class="o">=</span> <span class="n">Plot_Events</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s2">&quot;Dataframe&quot;</span><span class="p">],</span> <span class="n">ev</span><span class="p">[</span><span class="s2">&quot;Number&quot;</span><span class="p">])</span>
-    <span class="k">if</span> <span class="n">ev</span><span class="p">[</span><span class="s2">&quot;Accepted&quot;</span><span class="p">]:</span> <span class="n">Plot_Fit</span><span class="p">(</span><span class="n">ev</span><span class="p">,</span> <span class="n">plots</span><span class="p">,</span> <span class="n">calibration</span><span class="o">=</span><span class="n">calibration</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-    <span class="k">return</span>
+<h3 id="Assignments">Assignments<a class="anchor-link" href="#Assignments">&#182;</a></h3><p>The goal of the analysis is to select and study events with muon(s) passing through the detectors.
+You can start looking at the calibration runs as most of those events consist of muon tracks.</p>
+<p>Suggestion to be followed: for every event create a Pandas DataFrame with the hits recorded in that event. Add columns (features) as needed (e.g. global coordinates)</p>
+<ul>
+<li>Process the data and place the hits approriately in the global $xz$ plane (e.g. transform local coordinates into global coordinates)</li>
+<li>Display (event-by-event) the four detectors, the hits and the cell where the hits are found</li>
+<li>Select good (calibration) events by requiring hits either on the left side (detectors 0 and 1) or on the right side (detectors 2 and 3)</li>
+<li>Perform a local linear fit of the hits in each detector, for the cases where at least 3 hits in 3 different layers are found</li>
+<li>Perform a global linear fit combining the hits of 2 detectors on either of the two sides of the apparatus</li>
+<li>Study the performances of the detectors? What is the hit efficiency? What is the resolution of the position measurement?  </li>
+<li>Add the result of the fits to the event display (you should get what is shown in the picuters above, where the dashed lines correspond to the local fits and the solid line to the global one)</li>
+<li>Repeat what done above for the physics runs; start by selecting good physics events. Muon tracks hits were expected in the following regions for the 4 detectors:<div class="highlight"><pre><span></span><span class="p">{</span><span class="mi">0</span><span class="p">:[</span><span class="mf">540.</span><span class="p">,</span><span class="mf">720.</span><span class="p">],</span><span class="mi">1</span><span class="p">:[</span><span class="mf">540.</span><span class="p">,</span><span class="mi">720</span><span class="p">],</span><span class="mi">2</span><span class="p">:[</span><span class="mf">0.</span><span class="p">,</span><span class="mf">200.</span><span class="p">],</span><span class="mi">3</span><span class="p">:[</span><span class="mf">0.</span><span class="p">,</span><span class="mf">200.</span><span class="p">]}</span>
 </pre></div>
+what other requirements should you apply?</li>
+<li>Study the proporeties of the signal events: number of events, angular distributions and their correlations, etc. </li>
+</ul>
+<h3 id="Contacts">Contacts<a class="anchor-link" href="#Contacts">&#182;</a></h3><ul>
+<li>Marco Zanetti <a href="mailto:marco.zanetti@unipd.it">marco.zanetti@unipd.it</a></li>
+<li>Jacopo Pazzini <a href="mailto:jacopo.pazzini@unipd.it">jacopo.pazzini@unipd.it</a></li>
+</ul>
 
-    </div>
 </div>
 </div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span> 
-</pre></div>
-
-    </div>
-</div>
-</div>
-
 </div>
     </div>
   </div>
