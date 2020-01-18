@@ -13094,6 +13094,27 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Spatial-coordinates">Spatial coordinates<a class="anchor-link" href="#Spatial-coordinates">&#182;</a></h2><p>Our spatial quantities are all expressed in the local coordinates of the chamber, defined with respect to one side (the left one) of the chamber itself. All the subdetectors however were placed with a rotation of 180 degrees, which implies the $x$-axis of the local and global coordinates will end up having opposite orientations.
+<br>
+Below, we summarize all the quantities that will be needed to properly translate the coordinates in due time.</p>
+<div class="highlight"><pre><span></span><span class="c1">#Cell dimensions</span>
+<span class="n">XCELL</span> <span class="o">=</span> <span class="mf">42.</span>
+<span class="n">ZCELL</span> <span class="o">=</span> <span class="mf">13.</span>
+
+<span class="c1"># X coordinates translation</span>
+<span class="n">global_x_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">994.2</span><span class="p">,</span> <span class="mf">947.4</span><span class="p">,</span><span class="o">-</span><span class="mf">267.4</span><span class="p">,</span><span class="o">-</span><span class="mf">261.5</span><span class="p">,]</span>
+
+<span class="c1"># Z coordinates translations</span>
+<span class="n">local_z_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="n">z</span><span class="o">*</span><span class="n">ZCELL</span> <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">)]</span>
+<span class="n">global_z_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">823.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">823.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Data-format">Data format<a class="anchor-link" href="#Data-format">&#182;</a></h2><p>The data files are organized as a series of events where each event consists of a row of said files. These rows are stored in a recursive way so that they can be properly processed so as to obtain data in a readable and usable format for further analysis.
 <br>
 In particular, the pieces of information we have at disposal are the following:</p>
@@ -13110,27 +13131,6 @@ In particular, the pieces of information we have at disposal are the following:<
 </li>
 </ul>
 <p>Notice that N can in principle also be 0, in which case we will obtain an empy dataframe to be initialized with <code>NaN</code> values.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Spatial-coordinates">Spatial coordinates<a class="anchor-link" href="#Spatial-coordinates">&#182;</a></h2><p>Our spatial quantities are all expressed in the local coordinates of the chamber, defined with respect to one side (the left one) of the chamber itself. All the subdetectors however were placed with a rotation of 180 degrees, which implies the $x$-axis of the local and global coordinates will end up having opposite orientations.
-<br>
-Below, we summarize all the quantities that will be needed to properly translate the coordinates in due time.</p>
-<div class="highlight"><pre><span></span><span class="c1">#Cell dimensions</span>
-<span class="n">XCELL</span> <span class="o">=</span> <span class="mf">42.</span>
-<span class="n">ZCELL</span> <span class="o">=</span> <span class="mf">13.</span>
-
-<span class="c1"># X coordinates translation</span>
-<span class="n">global_x_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">994.2</span><span class="p">,</span> <span class="mf">947.4</span><span class="p">,</span><span class="o">-</span><span class="mf">267.4</span><span class="p">,</span><span class="o">-</span><span class="mf">261.5</span><span class="p">,]</span>
-
-<span class="c1"># Z coordinates translations</span>
-<span class="n">local_z_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="n">z</span><span class="o">*</span><span class="n">ZCELL</span> <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">4</span><span class="p">)]</span>
-<span class="n">global_z_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">823.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">823.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-</pre></div>
 
 </div>
 </div>
@@ -13424,10 +13424,10 @@ We use these events to perform preliminary analysis and test our selection crite
 
  
  
-<div id="10302139-052b-4d1a-8ff9-eb696555d9e5"></div>
+<div id="18847bb6-a285-4bb9-8316-ac84790bdf9e"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#10302139-052b-4d1a-8ff9-eb696555d9e5');
+var element = $('#18847bb6-a285-4bb9-8316-ac84790bdf9e');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "5211244cd81243138a5918f5a7aea472", "version_major": 2, "version_minor": 0}
@@ -13491,10 +13491,10 @@ Fraction of accepted events         = 33.2924 %
 
  
  
-<div id="80322823-fa94-4051-a266-058867515a2a"></div>
+<div id="96041ab9-4836-4967-89d3-16094a47adc6"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#80322823-fa94-4051-a266-058867515a2a');
+var element = $('#96041ab9-4836-4967-89d3-16094a47adc6');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "164d699c90544cd1b54fe10a5eab423f", "version_major": 2, "version_minor": 0}
@@ -13666,10 +13666,10 @@ var element = $('#80322823-fa94-4051-a266-058867515a2a');
 
  
  
-<div id="2ef9fc13-c191-4502-8129-502187c73d4b"></div>
+<div id="5cf8b3b1-ce98-408e-af50-71f4937d8a68"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#2ef9fc13-c191-4502-8129-502187c73d4b');
+var element = $('#5cf8b3b1-ce98-408e-af50-71f4937d8a68');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "ef5bf8b9b76647e4adcedd9e627d5d7e", "version_major": 2, "version_minor": 0}
@@ -13733,10 +13733,10 @@ Fraction of accepted events         = 24.2117 %
 
  
  
-<div id="3081e67c-fb51-4aca-932d-a2743557df1e"></div>
+<div id="6a3ee170-648c-43fc-9d3a-1e9d13042df3"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#3081e67c-fb51-4aca-932d-a2743557df1e');
+var element = $('#6a3ee170-648c-43fc-9d3a-1e9d13042df3');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "66992e82c35c4f74b34ccf9272d9e446", "version_major": 2, "version_minor": 0}
@@ -13908,10 +13908,10 @@ var element = $('#3081e67c-fb51-4aca-932d-a2743557df1e');
 
  
  
-<div id="0864064b-ba1e-470e-98c9-e71010aa3222"></div>
+<div id="dffaa3cd-8cae-477f-bd15-cb346422dc41"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#0864064b-ba1e-470e-98c9-e71010aa3222');
+var element = $('#dffaa3cd-8cae-477f-bd15-cb346422dc41');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "1fae925960664dfc8365cd4024f05d5d", "version_major": 2, "version_minor": 0}
@@ -13975,10 +13975,10 @@ Fraction of accepted events         = 27.3337 %
 
  
  
-<div id="1adfc562-4eea-43ec-a047-6b7d74c9e6d7"></div>
+<div id="8444709a-c4f0-45b1-b9b0-da02cca08c73"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#1adfc562-4eea-43ec-a047-6b7d74c9e6d7');
+var element = $('#8444709a-c4f0-45b1-b9b0-da02cca08c73');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "728fd8e8be704c7d9d4582b54bd077c3", "version_major": 2, "version_minor": 0}
@@ -14150,10 +14150,10 @@ var element = $('#1adfc562-4eea-43ec-a047-6b7d74c9e6d7');
 
  
  
-<div id="c9bea5d6-460f-489f-b93d-3e6176f1de15"></div>
+<div id="b01451ee-cc3e-4f0d-8034-6c1892a45e32"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#c9bea5d6-460f-489f-b93d-3e6176f1de15');
+var element = $('#b01451ee-cc3e-4f0d-8034-6c1892a45e32');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "5e52969807504c5297a3ff6c0ee7e18d", "version_major": 2, "version_minor": 0}
@@ -14217,10 +14217,10 @@ Fraction of accepted events         = 21.0386 %
 
  
  
-<div id="fbfa9e43-b86d-4582-b10e-d14f9a42587c"></div>
+<div id="e4620902-aceb-4c6a-a791-3c83809020fa"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#fbfa9e43-b86d-4582-b10e-d14f9a42587c');
+var element = $('#e4620902-aceb-4c6a-a791-3c83809020fa');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
 {"model_id": "ad946b3c1be348e7b622da441abcfa00", "version_major": 2, "version_minor": 0}
